@@ -168,7 +168,7 @@ fun SettingsBottomSheet(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "ตั้งค่ากล้อง",
+                        text = "การตั้งค่า (Settings)",
                         color = WhiteColor,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
@@ -181,536 +181,196 @@ fun SettingsBottomSheet(
                         )
                     }
                 }
-                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // ==========================================
+            // 1. PROJECT & WORKFLOW (Top Priority)
+            // ==========================================
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Person, null, tint = OrangeAccent, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("ข้อมูลงาน (Project Info)", color = OrangeAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
             item {
-                // Video Quality Selector
-                SettingsSelectorItem(
-                    title = "คุณภาพวิดีโอ",
-                    value = videoQuality,
-                    onClick = { showVideoQualityDialog = true }
-                )
+                SettingsSelectorItem("ชื่อโครงการ (Project)", if (projectName.isNotEmpty()) projectName else "ระบุ...", onClick = { tempProject = projectName; showProjectDialog = true })
                 Divider(color = WhiteColor.copy(alpha = 0.1f))
             }
-
             item {
-                // Aspect Ratio Selector
-                SettingsSelectorItem(
-                    title = "อัตราส่วนภาพ",
-                    value = aspectRatio,
-                    onClick = { showAspectRatioDialog = true }
-                )
+                SettingsSelectorItem("ผู้ตรวจงาน (Inspector)", if (inspectorName.isNotEmpty()) inspectorName else "ระบุ...", onClick = { tempInspector = inspectorName; showInspectorDialog = true })
                 Divider(color = WhiteColor.copy(alpha = 0.1f))
             }
-
             item {
-                // Date Watermark Toggle
-                SettingsToggleItem(
-                    title = "ลายน้ำวันที่",
-                    isEnabled = dateWatermarkEnabled,
-                    onToggle = onDateWatermarkChange
-                )
-                
-                if (dateWatermarkEnabled) {
-                     // Date Format
-                    SettingsSelectorItem(
-                        title = "รูปแบบวันที่",
-                        value = dateFormat,
-                        onClick = { showDateFormatDialog = true }
-                    )
-                    
-                    // Thai Language Toggle
-                    SettingsToggleItem(
-                        title = "พุทธศักราช (พ.ศ.)",
-                        isEnabled = useThaiLocale,
-                        onToggle = onUseThaiLocaleChange
-                    )
-                    
-                    // Custom Note
-                    SettingsSelectorItem(
-                        title = "ข้อความเพิ่มเติม (Note)",
-                        value = if (customNote.isNotEmpty()) customNote else "แตะเพื่อใส่ข้อความ...",
-                        onClick = { 
-                            tempNote = customNote 
-                            showNoteDialog = true 
-                        }
-                    )
-                }
+                SettingsSelectorItem("ข้อความ/หมายเหตุ (Note)", if (customNote.isNotEmpty()) customNote else "ระบุ...", onClick = { tempNote = customNote; showNoteDialog = true })
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            item {
+                SettingsSelectorItem("แท็ก (Tags)", if (tags.isNotEmpty()) tags else "ระบุ...", onClick = { tempTags = tags; showTagsDialog = true })
                 Divider(color = WhiteColor.copy(alpha = 0.1f))
             }
             
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // ==========================================
+            // 2. WATERMARK DESIGN (Visuals)
+            // ==========================================
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        tint = OrangeAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Icon(Icons.Default.Edit, null, tint = OrangeAccent, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "การแสดงผลลายน้ำ (Appearance)",
-                        color = OrangeAccent,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
+                    Text("รูปแบบลายน้ำ (Design)", color = OrangeAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             item {
-                // Text Shadow Toggle
-                SettingsToggleItem(
-                    title = "เงาตัวหนังสือ (Text Shadow)",
-                    isEnabled = textShadowEnabled,
-                    onToggle = onTextShadowChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Text Stroke Toggle
-                SettingsToggleItem(
-                    title = "เส้นขอบตัวหนังสือ (Text Stroke)",
-                    isEnabled = textStrokeEnabled,
-                    onToggle = onTextStrokeEnabledChange
-                )
-                
-                if (textStrokeEnabled) {
-                     SliderItem(
-                        title = "ความหนาเส้นขอบ: ${textStrokeWidth.toInt()}",
-                        value = textStrokeWidth,
-                        valueRange = 1f..10f,
-                        onValueChange = onTextStrokeWidthChange
-                    )
-                    
-                    ColorPickerItem(
-                        selectedColor = textStrokeColor,
-                        onColorSelected = onTextStrokeColorChange
-                    )
+                // Template Selector
+                val templateName = when(templateId) {
+                    1 -> "ทันสมัย (Modern)"
+                    2 -> "มินิมอล (Minimal)"
+                    else -> "ดั้งเดิม (Classic)"
                 }
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Text Background Toggle
-                SettingsToggleItem(
-                    title = "กรอบพื้นหลัง (Background Box)",
-                    isEnabled = textBackgroundEnabled,
-                    onToggle = onTextBackgroundChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("โลโก้ (Custom Logo)", color = WhiteColor, fontSize = 16.sp)
-                        if (hasLogo) {
-                             Text("Logo Selected", color = OrangeAccent, fontSize = 12.sp)
-                        } else {
-                             Text("Import transparent PNG", color = Color.Gray, fontSize = 12.sp)
-                        }
-                    }
-                    
-                    Row {
-                        if (hasLogo) {
-                            TextButton(onClick = onLogoRemove) {
-                                Text("Remove", color = Color.Red)
-                            }
-                        }
-                        Button(
-                            onClick = onLogoSelect,
-                            colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent)
-                        ) {
-                             Text(if (hasLogo) "Change" else "Import")
-                        }
-                    }
-                }
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Text Color Picker
-                ColorPickerItem(
-                    selectedColor = textColor,
-                    onColorSelected = onTextColorChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Text Size Slider
-                SliderItem(
-                    title = "ขนาดตัวอักษร: ${textSize.toInt()}",
-                    value = textSize,
-                    valueRange = 20f..80f,
-                    onValueChange = onTextSizeChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Font Style Selector
-                SegmentedButtonItem(
-                    title = "รูปแบบฟอนต์",
-                    options = listOf("ปกติ", "หนา", "Mono"),
-                    selectedIndex = textStyle,
-                    onOptionSelected = onTextStyleChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-            item {
-                // Font Selector (Google Fonts)
-                SettingsSelectorItem(
-                    title = "รูปแบบฟอนต์ (Font Family)",
-                    value = googleFontName,
-                    onClick = { showFontDialog = true }
-                )
-                  Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Font Selector
-                SegmentedButtonItem(
-                    title = "ฟอนต์ (Font Family)",
-                    options = listOf("Sans", "Serif", "Mono", "Cursive"),
-                    selectedIndex = when(fontFamily) {
-                        "serif" -> 1
-                        "monospace" -> 2
-                        "cursive" -> 3
-                        else -> 0
-                    },
-                    onOptionSelected = { index ->
-                         val family = when(index) {
-                             1 -> "serif"
-                             2 -> "monospace"
-                             3 -> "cursive"
-                             else -> "sans"
-                         }
-                         onFontFamilyChange(family)
-                    }
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Opacity Slider
-                 SliderItem(
-                    title = "ความโปร่งใส (Opacity): ${(textAlpha * 100 / 255)}%",
-                    value = textAlpha.toFloat(),
-                    valueRange = 0f..255f,
-                    onValueChange = { onTextAlphaChange(it.toInt()) }
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Position Selector
-                Text(
-                     text = "ตำแหน่งลายน้ำ (Position)",
-                     color = WhiteColor,
-                     fontSize = 16.sp,
-                     modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
-                )
-                PositionSelectorItem(
-                    selectedPosition = overlayPosition,
-                    onPositionSelected = onOverlayPositionChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Info, // Or LocationOn
-                        contentDescription = null,
-                        tint = OrangeAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "ข้อมูลเชิงลึก (Rich Data)",
-                        color = OrangeAccent,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
-                }
-            }
-
-            item {
-                // Compass Toggle
-                SettingsToggleItem(
-                    title = "เข็มทิศ (Compass)",
-                    isEnabled = compassEnabled,
-                    onToggle = onCompassChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                SettingsToggleItem(
-                    title = "แถบเข็มทิศ (Compass Tape)",
-                    isEnabled = compassTapeEnabled,
-                    onToggle = onCompassTapeChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-            
-            item {
-                // Altitude Toggle
-                SettingsToggleItem(
-                    title = "ความสูง (Altitude)",
-                    isEnabled = altitudeEnabled,
-                    onToggle = onAltitudeChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-            
-            item {
-                // Speed Toggle
-                SettingsToggleItem(
-                    title = "ความเร็ว (Speed)",
-                    isEnabled = speedEnabled,
-                    onToggle = onSpeedChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-
-            
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Person, // Or Build/Work
-                        contentDescription = null,
-                        tint = OrangeAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "การทำงานมืออาชีพ (Professional Workflow)",
-                        color = OrangeAccent,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
-                }
-            }
-
-            item {
-                // Project Name
-                SettingsSelectorItem(
-                    title = "ชื่อโครงการ (Project Name)",
-                    value = if (projectName.isNotEmpty()) projectName else "ระบุชื่อโครงการ...",
-                    onClick = {
-                        tempProject = projectName
-                        showProjectDialog = true
-                    }
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-            
-            item {
-                // Inspector Name
-                SettingsSelectorItem(
-                    title = "ผู้ตรวจงาน (Inspector)",
-                    value = if (inspectorName.isNotEmpty()) inspectorName else "ระบุชื่อผู้ตรวจ...",
-                    onClick = {
-                        tempInspector = inspectorName
-                        showInspectorDialog = true
-                    }
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-            
-            item {
-                // Tags
-                SettingsSelectorItem(
-                    title = "แท็ก (Tags)",
-                    value = if (tags.isNotEmpty()) tags else "เช่น Site A, Defect...",
-                    onClick = {
-                        tempTags = tags
-                        showTagsDialog = true
-                    }
-                )
-                 Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-            
-
-
-            item {
-                // Map Overlay Toggle
-                SettingsToggleItem(
-                    title = "แผนที่ (Map Overlay)",
-                    isEnabled = mapOverlayEnabled,
-                    onToggle = onMapOverlayChange
-                )
-                
-                if (mapOverlayEnabled || true) { // Always show GPS format if location is relevant usually, but maybe better inside Map section or standalone
-                     // GPS Format Selector
-                    SettingsSelectorItem(
-                        title = "รูปแบบพิกัด (GPS Format)",
-                        value = when(gpsFormat) {
-                            1 -> "DMS"
-                            2 -> "UTM"
-                            3 -> "MGRS"
-                            else -> "Decimal"
-                        },
-                        onClick = {
-                            // Cycle through formats: 0->1->2->3->0
-                            val nextFormat = (gpsFormat + 1) % 4
-                            onGpsFormatChange(nextFormat)
-                        }
-                    )
-                }
+                SettingsSelectorItem("เทมเพลต (Template)", templateName, onClick = { showTemplateDialog = true })
                 Divider(color = WhiteColor.copy(alpha = 0.1f))
             }
 
             item {
                 // Custom Logo
-                SettingsSelectorItem(
-                    title = "โลโก้ที่กำหนดเอง (Custom Logo)",
-                    value = if (hasLogo) "ตั้งค่าแล้ว (แตะเพื่อลบ)" else "เลือกรูปภาพ...",
-                    onClick = {
-                        if (hasLogo) onLogoRemove() else onLogoSelect()
-                    }
-                )
+                SettingsSelectorItem("โลโก้ (Logo)", if (hasLogo) "เลือกแล้ว" else "ไม่มี", onClick = { if (hasLogo) onLogoRemove() else onLogoSelect() })
                 Divider(color = WhiteColor.copy(alpha = 0.1f))
             }
-
+            
+            // Only show detailed font settings if customization is desired (maybe hide for minimal templates? keep for now)
             item {
-                // Shutter Sound Toggle
-                SettingsToggleItem(
-                    title = "เสียงชัตเตอร์",
-                    isEnabled = shutterSoundEnabled,
-                    onToggle = onShutterSoundChange
-                )
+                SettingsSelectorItem("ฟอนต์ (Font)", googleFontName, onClick = { showFontDialog = true })
                 Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Grid Lines Toggle
-                SettingsToggleItem(
-                    title = "เส้นตาราง (Grid Lines)",
-                    isEnabled = gridLinesEnabled,
-                    onToggle = onGridLinesChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Settings, // Or Save/Image
-                        contentDescription = null,
-                        tint = OrangeAccent,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "การบันทึกรูปภาพ (Image Saving)",
-                        color = OrangeAccent,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
-                }
-            }
-
-            item {
-                // Battery Saver Toggle
-                SettingsToggleItem(
-                    title = "โหมดประหยัดพลังงาน (จอดำเมื่ออัดวิดีโอ)",
-                    isEnabled = batterySaverMode,
-                    onToggle = onBatterySaverModeChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Photo Resolution
-                SettingsSelectorItem(
-                    title = "ความละเอียดรูปภาพ",
-                    value = if (targetWidth > 0) {
-                        val currentSize = supportedResolutions.find { it.width == targetWidth && it.height == targetHeight }
-                        if (currentSize != null) {
-                            "${currentSize.width}x${currentSize.height}"
-                        } else "${targetWidth}x${targetHeight}"
-                    } else "อัตโนมัติ (สูงสุด)",
-                    onClick = { showResolutionDialog = true }
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Flip Front Photo
-                SettingsToggleItem(
-                    title = "กลับด้านรูปกล้องหน้า",
-                    isEnabled = flipFrontPhoto,
-                    onToggle = onFlipFrontPhotoChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Image Format
-                SettingsSelectorItem(
-                    title = "นามสกุลไฟล์",
-                    value = imageFormat.name,
-                    onClick = { showFormatDialog = true }
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Compression Quality
-                Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                    Text(text = "คุณภาพการบีบอัด: $compressionQuality%", color = WhiteColor, fontSize = 16.sp)
-                    Slider(
-                        value = compressionQuality.toFloat(),
-                        onValueChange = { onCompressionQualityChange(it.toInt()) },
-                        valueRange = 10f..100f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = WhiteColor,
-                            activeTrackColor = OrangeAccent
-                        )
-                    )
-                }
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Save EXIF
-                SettingsToggleItem(
-                    title = "บันทึกข้อมูล EXIF (GPS/Metadata)",
-                    isEnabled = saveExif,
-                    onToggle = onSaveExifChange
-                )
-                Divider(color = WhiteColor.copy(alpha = 0.1f))
-            }
-
-            item {
-                // Save Path
-                SettingsSelectorItem(
-                    title = "โฟลเดอร์ที่เก็บรูป",
-                    value = customSavePath ?: "ในแกลเลอรี่ (แอป)",
-                    onClick = { onCustomSavePathChange(null) }
-                )
             }
             
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                 // Combined Text Style
+                 Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                 ) {
+                     Text("ตัวหนา (Bold)", color = WhiteColor, fontSize = 16.sp)
+                     Switch(
+                        checked = textStyle == 1,
+                        onCheckedChange = { onTextStyleChange(if (it) 1 else 0) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = WhiteColor, checkedTrackColor = OrangeAccent)
+                     )
+                 }
+                 Divider(color = WhiteColor.copy(alpha = 0.1f))
             }
+
+            item {
+                ColorPickerItem(selectedColor = textColor, onColorSelected = onTextColorChange)
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            
+            item {
+                SliderItem("ขนาดข้อความ: ${textSize.toInt()}", textSize, 20f..80f, onTextSizeChange)
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            
+            item {
+                Text("ตำแหน่ง (Position)", color = WhiteColor, fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp, bottom = 8.dp))
+                PositionSelectorItem(overlayPosition, onOverlayPositionChange)
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // ==========================================
+            // 3. DISPLAY CONTENT (Toggles)
+            // ==========================================
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Info, null, tint = OrangeAccent, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("ข้อมูลที่แสดง (Content)", color = OrangeAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingsToggleItem("วันที่และเวลา", dateWatermarkEnabled, onDateWatermarkChange)
+                 if (dateWatermarkEnabled) {
+                     Row(modifier = Modifier.padding(start = 16.dp)) {
+                         SettingsSelectorItem("รูปแบบวันที่", dateFormat, onClick = { showDateFormatDialog = true })
+                     }
+                     Row(modifier = Modifier.padding(start = 16.dp)) {
+                         SettingsToggleItem("ใช้ พ.ศ. (Thai Year)", useThaiLocale, onUseThaiLocaleChange)
+                     }
+                 }
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+
+            item {
+                SettingsToggleItem("แผนที่ (Map)", mapOverlayEnabled, onMapOverlayChange)
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            
+            item {
+                 // Rich Data Group
+                 SettingsToggleItem("เข็มทิศ (Compass)", compassEnabled, onCompassChange)
+                 SettingsToggleItem("แถบเข็มทิศ (Compass Tape)", compassTapeEnabled, onCompassTapeChange)
+                 SettingsToggleItem("ความสูง + ความเร็ว", altitudeEnabled && speedEnabled) { 
+                     onAltitudeChange(it)
+                     onSpeedChange(it)
+                 }
+                 Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            
+            item {
+                 // GPS Format
+                 SettingsSelectorItem("รูปแบบพิกัด (GPS)", when(gpsFormat) { 1->"DMS"; 2->"UTM"; 3->"MGRS"; else->"Decimal" }) {
+                     onGpsFormatChange((gpsFormat + 1) % 4)
+                 }
+                 Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // ==========================================
+            // 4. CAMERA CONFIG (Hardware/System)
+            // ==========================================
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Settings, null, tint = OrangeAccent, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("ตั้งค่ากล้อง (Camera Config)", color = OrangeAccent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            item {
+                SettingsSelectorItem("ความละเอียด (Resolution)", "${targetWidth}x${targetHeight}", onClick = { showResolutionDialog = true })
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            item {
+                SettingsSelectorItem("อัตราส่วน (Ratio)", aspectRatio, onClick = { showAspectRatioDialog = true })
+                Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            item {
+                 SettingsToggleItem("เสียงชัตเตอร์", shutterSoundEnabled, onShutterSoundChange)
+                 SettingsToggleItem("เส้นตาราง (Grid)", gridLinesEnabled, onGridLinesChange)
+                 SettingsToggleItem("กลับด้านรูปกล้องหน้า (Flip Front)", flipFrontPhoto, onFlipFrontPhotoChange)
+                 SettingsToggleItem("โหมดประหยัดแบต (Black Screen)", batterySaverMode, onBatterySaverModeChange)
+                 SettingsToggleItem("บันทึก EXIF", saveExif, onSaveExifChange)
+                 Divider(color = WhiteColor.copy(alpha = 0.1f))
+            }
+            
+            item {
+                 SettingsSelectorItem("ที่เก็บไฟล์", customSavePath ?: "แกลเลอรี่", onClick = { onCustomSavePathChange(null) })
+            }
+            
+            item { Spacer(modifier = Modifier.height(48.dp)) }
+
         }
 
     // Video Quality Selection Dialog
