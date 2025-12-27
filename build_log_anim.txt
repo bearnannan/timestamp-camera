@@ -1,0 +1,244 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+
+> Task :app:compileDebugKotlin
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:5 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:19 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:20 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:31 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:33 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:261:5 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:261:8 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:262:9 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:262:18 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:262:20 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:263:13 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:263:14 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:263:25 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:263:26 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:264:13 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:264:14 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:264:24 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:264:25 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:264:40 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:265:5 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:265:7 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:9 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:12 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:13 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:23 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:30 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:32 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:34 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:36 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:9 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:12 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:13 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:25 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:27 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:555:5 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:5 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:8 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:9 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:26 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:28 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:614:1 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:5 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:19 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:20 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:29 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:31 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1167:1 Expecting a top level declaration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:251:22 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:33 Conflicting overloads: public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:254:33 Function declaration must have a name
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:255:13 Unresolved reference: isCapturing
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:256:24 Suspend function 'snapTo' should be called only from a coroutine or another suspend function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:257:24 Suspend function 'animateTo' should be called only from a coroutine or another suspend function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:265:7 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:265:7 Conflicting overloads: public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:265:7 Function declaration must have a name
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:266:9 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:273:18 Unresolved reference: isRecording
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:275:36 Unresolved reference: isEditorMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:276:33 Unresolved reference: flashMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:277:33 Unresolved reference: timerMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:278:31 Unresolved reference: evText
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:279:36 Unresolved reference: onFlashClick
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:280:38 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:281:35 Unresolved reference: showEvSlider
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:281:51 Unresolved reference: showEvSlider
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:282:37 Unresolved reference: showSettingsSheet
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:284:25 Unresolved reference: importLauncher
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:289:25 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:304:48 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:312:21 Unresolved reference: isEditorMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:312:37 Unresolved reference: importedBitmap
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:313:21 Unresolved reference: importedBitmap
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:313:43 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:314:25 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:321:28 Unresolved reference: cameraController
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:323:38 Unresolved reference: cameraController
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:325:37 Unresolved reference: flashMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:334:33 Unresolved reference: rollAngle
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:338:21 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:343:21 Unresolved reference: isMacroSupported
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:348:37 Unresolved reference: isMacroEnabled
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:349:35 Unresolved reference: onMacroToggle
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:354:22 Unresolved reference: isEditorMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:359:40 Unresolved reference: selectedZoom
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:361:29 Unresolved reference: selectedZoom
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:371:29 Unresolved reference: onZoomChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:378:21 Unresolved reference: isRecording
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:396:36 Unresolved reference: recordingDuration
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:405:21 Unresolved reference: isCapturing
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:414:21 Unresolved reference: isTimerRunning
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:422:36 Unresolved reference: timerSeconds
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:438:18 Unresolved reference: isRecording
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:438:34 Unresolved reference: isEditorMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:440:36 Unresolved reference: selectedMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:442:25 Unresolved reference: selectedMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:443:25 Unresolved reference: onModeChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:453:32 Unresolved reference: isEditorMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:454:31 Unresolved reference: isCapturing
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:454:46 Unresolved reference: isTimerRunning
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:455:31 Unresolved reference: isRecording
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:456:35 Unresolved reference: lastCapturedUri
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:458:25 Unresolved reference: isEditorMode
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:459:25 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:461:60 Unresolved reference: context
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:463:33 Unresolved reference: isTimerRunning
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:464:25 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:465:29 Unresolved reference: onCaptureClick
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:469:39 Unresolved reference: onSwitchCameraClick
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:470:34 Unresolved reference: onGalleryClick
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:475:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:36 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:36 Conflicting overloads: public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:479:36 Function declaration must have a name
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:480:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:27 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:27 Conflicting overloads: public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:493:27 Function declaration must have a name
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:495:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:495:28 Unresolved reference: exposureIndex
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:497:17 Unresolved reference: showEvSlider
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:500:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:503:22 Unresolved reference: align
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:518:36 Unresolved reference: evText
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:528:37 Unresolved reference: exposureIndex
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:530:33 Unresolved reference: exposureIndex
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:531:33 Unresolved reference: cameraController
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:531:95 Unresolved reference: exposureIndex
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:28 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:28 Conflicting overloads: public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:558:28 Function declaration must have a name
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:559:9 @Composable invocations can only happen from the context of a @Composable function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:559:9 This material API is experimental and is likely to change or to be removed in the future.
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:560:26 Unresolved reference: settingsSheetState
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:561:27 Unresolved reference: showSettingsSheet
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:562:28 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:563:36 Unresolved reference: onVideoQualityChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:564:27 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:565:35 Unresolved reference: onAspectRatioChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:566:36 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:567:37 Unresolved reference: onDateWatermarkChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:568:35 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:569:36 Unresolved reference: onShutterSoundChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:570:32 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:571:33 Unresolved reference: onGridLinesChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:573:33 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:574:34 Unresolved reference: onMapOverlayChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:575:30 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:576:38 Unresolved reference: onFlipFrontPhotoChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:577:27 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:578:35 Unresolved reference: onImageFormatChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:579:34 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:580:42 Unresolved reference: onCompressionQualityChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:581:24 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:582:32 Unresolved reference: onSaveExifChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:583:30 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:584:38 Unresolved reference: onCustomSavePathChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:586:26 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:587:34 Unresolved reference: onCustomNoteChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:588:26 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:589:34 Unresolved reference: onDateFormatChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:590:29 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:591:37 Unresolved reference: onThaiLanguageChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:593:27 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:594:28 Unresolved reference: cameraSettings
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:595:36 Unresolved reference: supportedResolutions
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:596:40 Unresolved reference: onTargetResolutionChange
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:598:33 Unresolved reference: overlayConfig
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:599:36 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:600:37 Unresolved reference: overlayConfig
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:601:40 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:603:23 Unresolved reference: hasLogo
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:605:17 Unresolved reference: logoPickerLauncher
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:610:17 Unresolved reference: viewModel
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1086:1 This annotation is not repeatable
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1116:14 Unresolved reference: scale
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:31 Conflicting overloads: public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt, public fun `<no name provided>`(): Unit defined in com.example.timestampcamera.ui in file CameraScreen.kt
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1161:31 Function declaration must have a name
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1162:13 Unresolved reference: isPressed
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1163:13 Suspend function 'delay' should be called only from a coroutine or another suspend function
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1164:13 Unresolved reference: isPressed
+
+> Task :app:compileDebugKotlin FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.0-milestone-1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 11s
+31 actionable tasks: 2 executed, 29 up-to-date

@@ -1,0 +1,78 @@
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1516:2 Expecting '}'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:4:28 Conflicting import, imported name 'Alignment' is ambiguous
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:50:28 Conflicting import, imported name 'Alignment' is ambiguous
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:329:17 Unresolved reference: TopBar
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:384:21 Unresolved reference: CameraPreviewPlaceholder
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:388:17 Unresolved reference: LevelIndicator
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:395:21 Unresolved reference: GridLinesOverlay
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:400:21 Unresolved reference: MacroButton
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:411:21 Unresolved reference: ZoomControl
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:416:44 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:469:64 Unresolved reference: locationData
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:488:74 Unresolved reference: drawToBitmap
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:571:17 Unresolved reference: ModeSelector
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:573:40 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:584:13 Unresolved reference: BottomControlBar
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:845:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1000:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1012:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1052:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1095:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1111:13 Unresolved reference: ZoomButton
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1121:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1166:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1180:13 Unresolved reference: ModeButton
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1193:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1255:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1275:14 Unresolved reference: GalleryThumbnail
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1285:9 Unresolved reference: ShutterButton
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1295:13 Unresolved reference: SwitchCameraButton
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1306:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1342:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1428:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1451:1 Modifier 'private' is not applicable to 'local function'
+e: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:1479:1 Modifier 'private' is not applicable to 'local function'
+
+[Incubating] Problems report is available at: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.0-milestone-1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 11s
+17 actionable tasks: 2 executed, 15 up-to-date

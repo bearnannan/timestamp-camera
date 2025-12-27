@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ai">AI</string>
+    <string name="app_name">กล้องลงเวลา</string>
+    <string name="flash_auto">อัตโนมัติ</string>
+    <string name="flash_off">ปิด</string>
+    <string name="flash_on">เปิด</string>
+    <string name="grant_permission">อนุญาตสิทธิ์</string>
+    <string name="hdr">HDR</string>
+    <string name="permission_rationale">แอปนี้ต้องการสิทธิ์การเข้าถึงกล้องและตำแหน่งเพื่อทำงานได้อย่างถูกต้อง</string>
+    <string name="permission_required">จำเป็นต้องใช้สิทธิ์</string>
+    <string name="photo_mode">รูปถ่าย</string>
+    <string name="settings">ตั้งค่า</string>
+    <string name="unknown_location">ไม่ทราบตำแหน่ง</string>
+    <string name="video_mode">วิดีโอ</string>
+</resources>

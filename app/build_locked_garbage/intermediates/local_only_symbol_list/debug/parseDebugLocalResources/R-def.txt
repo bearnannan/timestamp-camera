@@ -1,0 +1,22 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+mipmap ic_launcher
+mipmap ic_launcher_round
+string ai
+string app_name
+string flash_auto
+string flash_off
+string flash_on
+string grant_permission
+string hdr
+string permission_rationale
+string permission_required
+string photo_mode
+string settings
+string unknown_location
+string video_mode
+style Theme.TimestampCamera
+xml backup_rules
+xml data_extraction_rules

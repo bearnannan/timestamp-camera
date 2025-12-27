@@ -1,0 +1,49 @@
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+
+> Task :app:compileDebugKotlin
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:216:5 Annotation 'androidx.camera.camera2.interop.ExperimentalCamera2Interop' is not an opt-in requirement marker, therefore its usage in @OptIn is ignored
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:237:30 'setter for imageCaptureTargetSize: CameraController.OutputSize?' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:237:72 'OutputSize' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:241:30 'setter for imageCaptureTargetSize: CameraController.OutputSize?' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:409:34 'setter for imageCaptureTargetSize: CameraController.OutputSize?' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:409:97 'OutputSize' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/MainActivity.kt:453:88 Parameter 'uri' is never used, could be renamed to _
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraPreview.kt:61:20 'setImageCaptureTargetSize(CameraController.OutputSize?): Unit' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraPreview.kt:61:63 'OutputSize' is deprecated. Deprecated in Java
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:103:5 Parameter 'onMenuClick' is never used
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:104:5 Parameter 'onMacroClick' is never used
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:133:5 Parameter 'onBatterySaverModeChange' is never used
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:143:5 Parameter 'onLogoClick' is never used
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraScreen.kt:187:9 Variable 'scope' is never used
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraViewModel.kt:406:5 Annotation 'androidx.camera.camera2.interop.ExperimentalCamera2Interop' is not an opt-in requirement marker, therefore its usage in @OptIn is ignored
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/ui/CameraViewModel.kt:479:5 Annotation 'androidx.camera.camera2.interop.ExperimentalCamera2Interop' is not an opt-in requirement marker, therefore its usage in @OptIn is ignored
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/util/OverlayUtils.kt:170:17 Name shadowed: width
+w: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/app/src/main/java/com/example/timestampcamera/util/OverlayUtils.kt:171:17 Name shadowed: height
+
+[Incubating] Problems report is available at: file:///C:/Users/WATCHARA%20MANADEE/.gemini/antigravity/playground/dynamic-zodiac/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.0-milestone-1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 24s
+17 actionable tasks: 2 executed, 15 up-to-date
