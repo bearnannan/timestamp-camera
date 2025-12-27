@@ -104,7 +104,13 @@ data class OverlayConfig(
             if (showAddress && address.isNotEmpty()) append("$address\n")
             if (showLatLon && latLon.isNotEmpty()) append("$latLon\n")
             if (showAltitudeSpeed && altitudeSpeed.isNotEmpty()) append("$altitudeSpeed\n")
-            // ...
+            
+            // Professional Workflow
+            if (projectName.isNotEmpty()) append("Project: $projectName\n")
+            if (inspectorName.isNotEmpty()) append("Inspector: $inspectorName\n")
+            if (tags.isNotEmpty()) append("Tags: $tags\n")
+            
+            if (showCustomText && customText.isNotEmpty()) append("$customText\n")
         }.trim()
     }
 }

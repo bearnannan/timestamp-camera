@@ -172,6 +172,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                          }
                     }
                 )
+
+                updateOverlayText(_locationData.value)
                 
 
             }
