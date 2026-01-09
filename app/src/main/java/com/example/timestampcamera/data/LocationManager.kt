@@ -27,7 +27,14 @@ data class LocationData(
     val longitude: Double = 0.0,
     val altitude: Double = 0.0,
     val speed: Float = 0.0f,
-    val address: String = ""
+    val address: String = "",
+    val houseNumber: String = "",
+    val street: String = "",
+    val subDistrict: String = "",
+    val district: String = "",
+    val province: String = "",
+    val country: String = "",
+    val postalCode: String = ""
 )
 
 class LocationManager(private val context: Context) {
@@ -53,7 +60,14 @@ class LocationManager(private val context: Context) {
                             longitude = location.longitude,
                             altitude = location.altitude,
                             speed = location.speed,
-                            address = address
+                            address = address.addressLine,
+                            houseNumber = address.houseNumber,
+                            street = address.street,
+                            subDistrict = address.subDistrict,
+                            district = address.district,
+                            province = address.province,
+                            country = address.country,
+                            postalCode = address.postalCode
                         )
                     )
                 }
@@ -80,11 +94,20 @@ class LocationManager(private val context: Context) {
         val magnetometerReading = FloatArray(3)
         
         val sensorEventListener = object : SensorEventListener {
+            // Low-pass filter factor (smaller = more smoothing/latency)
+            val alpha = 0.05f 
+
             override fun onSensorChanged(event: SensorEvent) {
                 if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-                    System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+                    // Apply Low-Pass Filter to Accelerometer
+                    accelerometerReading[0] = alpha * event.values[0] + (1 - alpha) * accelerometerReading[0]
+                    accelerometerReading[1] = alpha * event.values[1] + (1 - alpha) * accelerometerReading[1]
+                    accelerometerReading[2] = alpha * event.values[2] + (1 - alpha) * accelerometerReading[2]
                 } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-                    System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+                    // Apply Low-Pass Filter to Magnetometer
+                    magnetometerReading[0] = alpha * event.values[0] + (1 - alpha) * magnetometerReading[0]
+                    magnetometerReading[1] = alpha * event.values[1] + (1 - alpha) * magnetometerReading[1]
+                    magnetometerReading[2] = alpha * event.values[2] + (1 - alpha) * magnetometerReading[2]
                 }
                 
                 val rotationMatrix = FloatArray(9)
@@ -120,28 +143,44 @@ class LocationManager(private val context: Context) {
         }
     }
 
-    private fun getAddressFromLocation(location: Location): String {
+    data class AddressComponents(
+        val addressLine: String = "",
+        val houseNumber: String = "",
+        val street: String = "",
+        val subDistrict: String = "",
+        val district: String = "",
+        val province: String = "",
+        val country: String = "",
+        val postalCode: String = ""
+    )
+
+    private fun getAddressFromLocation(location: Location): AddressComponents {
         val geocoder = Geocoder(context, Locale.getDefault())
         try {
             @Suppress("DEPRECATION")
             val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0]
+                val houseNumber = address.featureName ?: ""
                 val street = address.thoroughfare ?: ""
+                val subDistrict = address.subLocality ?: "" // Sub-district/Tambon
                 val district = address.subAdminArea ?: "" // District/Amphoe
                 val province = address.adminArea ?: "" // Province/Changwat
-                val subDistrict = address.subLocality ?: "" // Sub-district/Tambon
+                val country = address.countryName ?: ""
+                val postalCode = address.postalCode ?: ""
                 
-                // Construct address line based on available data
-                val parts = listOf(street, subDistrict, district, province).filter { it.isNotEmpty() }
-                return parts.joinToString(", ")
+                // Construct full address line for fallback
+                val parts = listOf(houseNumber, street, subDistrict, district, province, postalCode).filter { it.isNotEmpty() }
+                val fullAddress = parts.joinToString(", ")
+                
+                return AddressComponents(fullAddress, houseNumber, street, subDistrict, district, province, country, postalCode)
             }
         } catch (e: IOException) {
             e.printStackTrace()
         } catch (e: Exception) {
              e.printStackTrace()
         }
-        return context.getString(R.string.unknown_location)
+        return AddressComponents(addressLine = context.getString(R.string.unknown_location))
     }
 
     companion object {

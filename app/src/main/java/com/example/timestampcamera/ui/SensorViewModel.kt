@@ -40,6 +40,15 @@ class SensorViewModel(application: Application) : AndroidViewModel(application),
     // For Compass (0-360 degrees)
     private val _compassHeading = MutableStateFlow(0f)
     val compassHeading: StateFlow<Float> = _compassHeading.asStateFlow()
+
+    // For Virtual Leveler (Pitch: Up/Down, Roll: Left/Right)
+    // Pitch: -90 to +90 (0 is level)
+    // Roll: -180 to +180 (0 is level)
+    private val _devicePitch = MutableStateFlow(0f)
+    val devicePitch: StateFlow<Float> = _devicePitch.asStateFlow()
+    
+    private val _deviceRoll = MutableStateFlow(0f)
+    val deviceRoll: StateFlow<Float> = _deviceRoll.asStateFlow()
     
     private var currentFilteredAzimuth = 0f
 
@@ -58,7 +67,7 @@ class SensorViewModel(application: Application) : AndroidViewModel(application),
 
     fun startTracking() {
         rotationSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) // Higher rate for smooth animation
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) // Optimized for UI smoothness and battery
         }
     }
 
@@ -157,8 +166,8 @@ class SensorViewModel(application: Application) : AndroidViewModel(application),
         var azimuthDeg = Math.toDegrees(azimuthRad.toDouble()).toFloat()
         // Convert -180..180 to 0..360
         if (azimuthDeg < 0) azimuthDeg += 360f
-        
-        updateCompass(azimuthDeg)
+        // Update Compass Heading, Pitch, and Roll
+        updateOrientation(orientationAngles)
 
         updateAngles(-angleDeg) // Invert for visual correction
     }
@@ -175,54 +184,55 @@ class SensorViewModel(application: Application) : AndroidViewModel(application),
         val heading = (currentFilteredAzimuth + 360) % 360
         _compassHeading.value = heading
     }
+    
+    private fun updateOrientation(orientation: FloatArray) {
+        // orientation[0] = Azimuth
+        // orientation[1] = Pitch
+        // orientation[2] = Roll
+        
+        val azimuth = (Math.toDegrees(orientation[0].toDouble()) + 360) % 360
+        updateCompass(azimuth.toFloat())
+        
+        val pitchDeg = Math.toDegrees(orientation[1].toDouble()).toFloat()
+        val rollDeg = Math.toDegrees(orientation[2].toDouble()).toFloat()
+        
+        // Low-pass filter
+        val alpha = 0.1f
+        _devicePitch.value = _devicePitch.value + alpha * (pitchDeg - _devicePitch.value)
+        _deviceRoll.value = _deviceRoll.value + alpha * (rollDeg - _deviceRoll.value)
+    }
 
     private fun updateAngles(targetAngle: Float) {
         // 1. Smooth Horizon Rotation (Low Pass Filter with Shortest Path)
-        
-        // Normalize angles to -180..180 for shortest path check
-        // (Actually simple LPF on raw difference works if we wrap the data first)
-        
         var diff = targetAngle - currentFilteredAngle
         
-        // Wrap difference to -180..180
+        // Wrap difference to -180..180 for shortest path
         while (diff < -180) diff += 360
         while (diff > 180) diff -= 360
         
         // Apply LPF
         currentFilteredAngle += diff * alpha
-        
-        // Normalize result to clear float drift (optional, keep 0-360 or -180..180)
-        // For UI rotate, raw value is fine.
-        
         _horizonRotation.value = currentFilteredAngle
         
         // 2. Discrete UI Rotation (Snap to 0, 90, 180, 270)
-        // Use the smoothed angle to avoid jitter at boundaries
-        // Or uses raw targetAngle for responsiveness? Smoothed is better for "Premium" feel.
+        // targetAngle is -atan2(gX, gY), where:
+        // Upright Portrait: gX ~ 0, gY ~ 9.8 -> angle 0
+        // Landscape Left: gX ~ 9.8, gY ~ 0 -> angle -90
+        // Landscape Right: gX ~ -9.8, gY ~ 0 -> angle 90
+        // Upside Down: gX ~ 0, gY ~ -9.8 -> angle 180
         
-
-        
-        var orientation = 0f
-        val norm = (currentFilteredAngle + 360) % 360
-        
-        // Assuming currentFilteredAngle is (Device Rotation * -1)
-        // If Device is 0 -> Angle 0 -> UI 0
-        // If Device is 90 (Right/CW) -> gX=-1 -> atan=-90 -> Angle +90.
-        //    UI needs -90.
-        // If Device is -90 (Left/CCW) -> gX=1 -> atan=90 -> Angle -90.
-        //    UI needs +90.
-        
-        if (currentFilteredAngle > 45 && currentFilteredAngle <= 135) {
-            orientation = -90f
-        } else if (currentFilteredAngle >= -135 && currentFilteredAngle < -45) {
-            orientation = 90f
-        } else if (abs(currentFilteredAngle) > 135) {
-            orientation = 180f
-        } else {
-            orientation = 0f
+        val absAngle = abs(targetAngle)
+        val orientation = when {
+            absAngle < 45 -> 0f              // Upright
+            targetAngle < -45 && targetAngle > -135 -> -90f // Landscape (Home button on right)
+            targetAngle > 45 && targetAngle < 135 -> 90f    // Landscape (Home button on left)
+            absAngle > 135 -> 180f           // Upside Down
+            else -> _uiRotation.value        // Keep previous if in dead zone
         }
         
-        _uiRotation.value = orientation
+        if (_uiRotation.value != orientation) {
+            _uiRotation.value = orientation
+        }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}

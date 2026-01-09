@@ -52,7 +52,11 @@ fun CameraPreview(
             "SD" -> Quality.SD
             else -> Quality.FHD
         }
-        controller.videoCaptureQualitySelector = QualitySelector.from(quality)
+        // Use FallbackStrategy to ensure we always get a valid stream
+        controller.videoCaptureQualitySelector = QualitySelector.from(
+            quality,
+            androidx.camera.video.FallbackStrategy.lowerQualityOrHigherThan(Quality.SD)
+        )
     }
 
     // Photo Ratio Effect

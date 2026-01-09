@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.appdistribution")
 }
 
 android {
@@ -11,8 +13,8 @@ android {
         applicationId = "com.example.timestampcamera"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 49
+        versionName = "2.29"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,6 +26,16 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug")
+
+            configure<com.google.firebase.appdistribution.gradle.AppDistributionExtension> {
+                appId = "1:1082083969948:android:344bb0f07a976735805659"
+                artifactType = "APK"
+                groups = "testers"
+                
+                // --- เพิ่มบรรทัดนี้ครับ ---
+                serviceCredentialsFile = "app/login.json" 
+            }
         }
     }
     compileOptions {
@@ -42,6 +54,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
         }
     }
 }
@@ -92,6 +105,27 @@ dependencies {
 
     // Zxing (QR Code)
     implementation("com.google.zxing:core:3.5.1") 
+    
+    // ML Kit (Image Labeling)
+    implementation("com.google.mlkit:image-labeling:17.0.7")
+
+    // Google Auth & Drive
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.api-client:google-api-client-android:2.2.0")
+    implementation("com.google.http-client:google-http-client-android:1.44.1")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20230822-2.0.0")
+    implementation("com.google.guava:guava:31.1-android") {
+        exclude(group = "org.apache.httpcomponents")
+    }
+    
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // Media3 (ExoPlayer)
+    var media3Version = "1.2.0"
+    implementation("androidx.media3:media3-exoplayer:$media3Version")
+    implementation("androidx.media3:media3-ui:$media3Version")
+    implementation("androidx.media3:media3-common:$media3Version")
     
     // OSMDroid (Mini-Map) REMOVED
 

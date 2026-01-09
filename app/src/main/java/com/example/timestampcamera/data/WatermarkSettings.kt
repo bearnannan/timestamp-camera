@@ -15,16 +15,45 @@ enum class LocationFormat {
     NONE
 }
 
-enum class WatermarkItemType {
-    DATE_TIME,
-    GPS, // Lat/Lon or UTM
-    ADDRESS,
-    COMPASS,
-    ALTITUDE_SPEED,
-    CUSTOM_TEXT, // Project, Inspector, Note
-    TAGS,
-    INDEX_NUMBER,
-    LOGO
+enum class AddressResolution {
+    NONE,
+    COUNTRY,
+    PROVINCE,
+    DISTRICT,
+    STREET,
+    HOUSE_NO_STREET,
+    HOUSE_NO,
+    FULL_ADDRESS_NO_ZIP,
+    FULL_ADDRESS,
+    FULL_ADDRESS_BREAK_ZIP
+}
+
+enum class WatermarkItemType(val displayName: String) {
+    DATE_TIME("Date & Time"),
+    GPS("GPS Coordinates"),
+    COMPASS("Compass Heading"),
+    ADDRESS("Address"),
+    ALTITUDE_SPEED("Altitude & Speed"),
+    PROJECT_NAME("Project Name"),
+    INSPECTOR_NAME("Inspector Name"),
+    NOTE("Note"),
+    TAGS("Tags"),
+
+    CUSTOM_TEXT("Custom Text"), // Deprecated or kept for fallback
+    LOGO("Logo")
+}
+
+enum class FileNameFormat {
+    TIMESTAMP_PROJECT,
+    TIMESTAMP_ADDRESS,
+    INDEX_TIMESTAMP,
+    UNIQUE_ID,
+    BS_PROJECT_ADDRESS_TIMESTAMP,
+    ADDRESS_TIMESTAMP,
+    BS_PROJECT_TIMESTAMP,
+    TAG_BS_PROJECT_TIMESTAMP,
+    BS_PROJECT_TIMESTAMP_TAG,
+    TIMESTAMP_UNDERSCORE
 }
 
 data class WatermarkSettings(
@@ -36,10 +65,15 @@ data class WatermarkSettings(
     val customTags: List<String> = emptyList(),
     val activeItemsOrder: List<WatermarkItemType> = listOf(
         WatermarkItemType.DATE_TIME,
-        WatermarkItemType.ADDRESS,
         WatermarkItemType.GPS,
-        WatermarkItemType.CUSTOM_TEXT,
-        WatermarkItemType.TAGS
+        WatermarkItemType.COMPASS,
+        WatermarkItemType.ADDRESS,
+        WatermarkItemType.ALTITUDE_SPEED,
+        WatermarkItemType.PROJECT_NAME,
+        WatermarkItemType.INSPECTOR_NAME,
+        WatermarkItemType.NOTE,
+        WatermarkItemType.TAGS,
+
     ),
     val textShadowEnabled: Boolean = true,
     val textStrokeEnabled: Boolean = false,
@@ -48,5 +82,6 @@ data class WatermarkSettings(
     // Additional data holders (can be populated by ViewModel before drawing)
     val customText: String = "",
     val projectName: String = "",
-    val inspectorName: String = ""
+    val inspectorName: String = "",
+    val addressResolution: AddressResolution = AddressResolution.FULL_ADDRESS
 )

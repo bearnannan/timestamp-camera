@@ -12,5 +12,7 @@ data class MediaItem(
     val uri: Uri,
     val dateTaken: Date,
     val name: String,
-    val type: MediaType
+    val type: MediaType,
+    val path: String = "", // Absolute path or relative path
+    val bucketName: String = "" // For grouping
 )

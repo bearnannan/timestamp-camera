@@ -1,5 +1,24 @@
-.gradle/ 
-build/ 
-app/build/ 
-local.properties 
+.gradle/
+build/
+app/build/
+local.properties
 .idea/
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.agent/
+
+# Keystore files
+*.jks
+*.keystore
+*.p12
+
+# Google Services & Secrets
+app/google-services.json
+app/login.json
+google-services.json
+
+# VsCode
+.vscode/

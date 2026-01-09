@@ -25,21 +25,20 @@ object ImageSaver {
         settings: CameraSettings,
         context: Context,
         isFrontCamera: Boolean,
-        location: Location? = null
+        location: Location? = null,
+        customFileName: String? = null // Optional override
     ): Uri? = withContext(Dispatchers.IO) {
         
         var processedBitmap = bitmap
 
-        // 1. Flip photos on front camera
-        if (isFrontCamera && settings.flipFrontPhoto) {
-            val matrix = Matrix().apply { postScale(-1f, 1f) }
-            processedBitmap = Bitmap.createBitmap(
-                bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
-            )
-        }
+        // 1. Flip photos on front camera logic moved to CameraViewModel
+        // to prevent flipping text overlays.
+
 
         // 2. Prepare for saving
-        val fileName = "IMG_${System.currentTimeMillis()}.${settings.imageFormat.name.lowercase()}"
+        val extension = settings.imageFormat.name.lowercase()
+        val baseName = customFileName ?: "IMG_${System.currentTimeMillis()}"
+        val fileName = "$baseName.$extension"
         val compressFormat = when (settings.imageFormat) {
             ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
             ImageFormat.PNG -> Bitmap.CompressFormat.PNG
@@ -80,11 +79,20 @@ object ImageSaver {
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
         }
 
+        val now = System.currentTimeMillis()
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
             put(MediaStore.Images.Media.MIME_TYPE, "image/${settings.imageFormat.name.lowercase()}")
+            
+            // Fix 1970 Epoch Bug: Explicitly set timestamp
+            put(MediaStore.Images.Media.DATE_TAKEN, now)
+            put(MediaStore.Images.Media.DATE_ADDED, now / 1000)
+            put(MediaStore.Images.Media.DATE_MODIFIED, now / 1000)
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/TimestampCamera")
+                // Smart Album Grouping: Save to Project Subfolder
+                val projectPath = if (settings.projectName.isNotBlank()) "/${settings.projectName}" else ""
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/TimestampCamera" + projectPath)
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
         }
@@ -117,6 +125,14 @@ object ImageSaver {
                             location?.let {
                                 exif.setGpsInfo(it)
                             }
+                            
+                            // Essential: Explicitly set Date/Time in EXIF
+                            // Format: "yyyy:MM:dd HH:mm:ss"
+                            val dateFormat = java.text.SimpleDateFormat("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
+                            val nowString = dateFormat.format(java.util.Date(now))
+                            exif.setAttribute(ExifInterface.TAG_DATETIME, nowString)
+                            exif.setAttribute(ExifInterface.TAG_DATETIME_ORIGINAL, nowString)
+                            exif.setAttribute(ExifInterface.TAG_DATETIME_DIGITIZED, nowString)
                             
                             exif.saveAttributes()
                         }

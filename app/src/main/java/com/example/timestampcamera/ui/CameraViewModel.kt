@@ -10,9 +10,11 @@ import com.example.timestampcamera.data.LocationData
 import com.example.timestampcamera.util.OverlayConfig
 import com.example.timestampcamera.util.OverlayPosition
 import com.example.timestampcamera.util.OverlayUtils
+import com.example.timestampcamera.util.ExifUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import android.net.Uri
@@ -48,11 +50,57 @@ import java.util.concurrent.ExecutionException
 import kotlin.math.abs
 import com.example.timestampcamera.data.GalleryRepository
 import com.example.timestampcamera.data.MediaItem
+import com.example.timestampcamera.data.CustomField
+import android.view.OrientationEventListener
+import android.view.Surface
+import androidx.camera.view.LifecycleCameraController
 
 
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
 
     private val locationManager = LocationManager(application)
+    
+    // ORIENTATION STATE
+    private val _uiRotation = MutableStateFlow(0f)
+    val uiRotation: StateFlow<Float> = _uiRotation.asStateFlow()
+    
+    private var orientationEventListener: OrientationEventListener? = null
+    private var lastSnappedRotation = 0
+    
+    init {
+        setupOrientationListener(application)
+    }
+
+    private fun setupOrientationListener(context: android.content.Context) {
+        orientationEventListener = object : OrientationEventListener(context) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+                
+                // Snap to 0, 90, 180, 270
+                val rotation = when {
+                    orientation >= 315 || orientation < 45 -> 0
+                    orientation in 45 until 135 -> 270 // 90 deg CW
+                    orientation in 135 until 225 -> 180
+                    orientation in 225 until 315 -> 90 // 90 deg CCW
+                    else -> 0
+                }
+                
+                if (rotation != lastSnappedRotation) {
+                    lastSnappedRotation = rotation
+                    _uiRotation.value = when(rotation) {
+                        90 -> 90f
+                        180 -> 180f
+                        270 -> -90f
+                        else -> 0f
+                    }
+                    Log.d("CameraViewModel", "Orientation changed: $orientation, Snapped: $rotation")
+                }
+            }
+        }
+        orientationEventListener?.enable()
+    }
+
+
 
     private val _locationData = MutableStateFlow(LocationData())
     val locationData: StateFlow<LocationData> = _locationData.asStateFlow()
@@ -63,17 +111,204 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val _lastCapturedUri = MutableStateFlow<android.net.Uri?>(null)
     val lastCapturedUri: StateFlow<android.net.Uri?> = _lastCapturedUri.asStateFlow()
 
+    // Capture State (Lock UI during processing)
+    private val _isCapturing = MutableStateFlow(false)
+    val isCapturing: StateFlow<Boolean> = _isCapturing.asStateFlow()
+
+    // CAMERA EXTENSIONS STATE
+    private var extensionsManager: androidx.camera.extensions.ExtensionsManager? = null
+    private var cameraProvider: ProcessCameraProvider? = null
+    
+    // Default to standard selector
+    private val _cameraSelector = MutableStateFlow(CameraSelector.DEFAULT_BACK_CAMERA)
+    val cameraSelector: StateFlow<CameraSelector> = _cameraSelector.asStateFlow()
+    
+    // Available Extension Mode (null = None, or ExtensionMode.HDR, etc.)
+    private val _activeExtensionMode = MutableStateFlow<Int?>(null)
+    val activeExtensionMode: StateFlow<Int?> = _activeExtensionMode.asStateFlow()
+
+    // Available Extension Modes for current camera
+    private val _availableExtensionModes = MutableStateFlow<List<Int>>(emptyList())
+    
+    // User selected mode (null = None/Standard)
+    // Note: We default to null (Standard) to avoid forcing modes the user didn't ask for.
+    private val _targetExtensionMode = MutableStateFlow<Int?>(null)
+
+    fun initializeExtensions(context: android.content.Context, cameraProvider: ProcessCameraProvider) {
+        this.cameraProvider = cameraProvider
+        if (extensionsManager != null) {
+            refreshCameraSelector(isFront = false) // Default logic
+            return
+        }
+        
+        val future = androidx.camera.extensions.ExtensionsManager.getInstanceAsync(context, cameraProvider)
+        future.addListener({
+            try {
+                extensionsManager = future.get()
+                // Once initialized, re-calculate selector for current facing
+                refreshCameraSelector(isFront = false)
+            } catch (e: Exception) {
+                Log.e("CameraViewModel", "Failed to initialize ExtensionsManager", e)
+            }
+        }, androidx.core.content.ContextCompat.getMainExecutor(context))
+    }
+    
+    fun toggleExtensionMode() {
+        val available = _availableExtensionModes.value
+        if (available.isEmpty()) return
+        
+        // Cycle Logic:
+        // Null (Smart Priority) -> Next Available Mode (skipping current smart choice) -> ... -> -1 -> Null
+        
+        val currentTarget = _targetExtensionMode.value
+        val activeMode = _activeExtensionMode.value
+        
+        val nextTarget: Int? = if (currentTarget == null) {
+            // Currently in Smart Mode.
+            // Find what mode effectively ran, and skip to the NEXT one.
+            // If activeMode is Night, we want to skip Explicit Night and go to HDR (if exists) or Standard (-1).
+            
+            val currentIndex = if (activeMode != null) available.indexOf(activeMode) else -1
+            
+            if (currentIndex != -1 && currentIndex < available.size - 1) {
+                 available[currentIndex + 1]
+            } else {
+                 -1 // Standard
+            }
+        } else if (currentTarget == -1) {
+            // From Standard -> Smart
+            null
+        } else {
+            // From Explicit Mode -> Next Explicit or Standard
+            val currentIndex = available.indexOf(currentTarget)
+             if (currentIndex != -1 && currentIndex < available.size - 1) {
+                 available[currentIndex + 1]
+            } else {
+                -1 // Explicit Standard
+            }
+        }
+        
+        _targetExtensionMode.value = nextTarget
+        // Trigger refresh to apply
+        refreshCameraSelector()
+    }
+    
+    fun refreshCameraSelector(isFront: Boolean? = null) {
+        val facing = if (isFront == true) CameraSelector.LENS_FACING_FRONT 
+                     else if (isFront == false) CameraSelector.LENS_FACING_BACK
+                     else {
+                         // Derive from current
+                         val current = _cameraSelector.value
+                         if (current == CameraSelector.DEFAULT_FRONT_CAMERA) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
+                     }
+                     
+        val baseSelector = CameraSelector.Builder().requireLensFacing(facing).build()
+        val manager = extensionsManager
+        val provider = cameraProvider
+        
+        if (manager == null || provider == null) {
+            _cameraSelector.value = baseSelector
+            _activeExtensionMode.value = null
+            _availableExtensionModes.value = emptyList()
+            return
+        }
+        
+        // 1. Discovery Phase: Find all supported modes for this lens
+        val supportedModes = mutableListOf<Int>()
+        
+        // Check and Log for Debugging
+        val isAuto = manager.isExtensionAvailable(baseSelector, androidx.camera.extensions.ExtensionMode.AUTO)
+        val isHdr = manager.isExtensionAvailable(baseSelector, androidx.camera.extensions.ExtensionMode.HDR)
+        val isNight = manager.isExtensionAvailable(baseSelector, androidx.camera.extensions.ExtensionMode.NIGHT)
+        // val isBokeh = manager.isExtensionAvailable(baseSelector, androidx.camera.extensions.ExtensionMode.BOKEH) // REMOVED
+        // val isFaceRetouch = manager.isExtensionAvailable(baseSelector, androidx.camera.extensions.ExtensionMode.FACE_RETOUCH) // REMOVED
+
+        Log.d("CameraViewModel", "Extension Availability: Auto=$isAuto, HDR=$isHdr, Night=$isNight for facing=$facing")
+        
+        if (isAuto) supportedModes.add(androidx.camera.extensions.ExtensionMode.AUTO)
+        if (isHdr) supportedModes.add(androidx.camera.extensions.ExtensionMode.HDR)
+        if (isNight) supportedModes.add(androidx.camera.extensions.ExtensionMode.NIGHT)
+        // if (isBokeh) supportedModes.add(androidx.camera.extensions.ExtensionMode.BOKEH) // REMOVED
+        // if (isFaceRetouch) supportedModes.add(androidx.camera.extensions.ExtensionMode.FACE_RETOUCH) // REMOVED
+        
+        _availableExtensionModes.value = supportedModes
+        
+        // 2. Selection Phase: logic
+        // Target = -1 -> Explicit Standard (Off)
+        // Target = null -> Smart Priority (Night > HDR > Auto)
+        // Target = Mode -> Specific Mode
+        val target = _targetExtensionMode.value
+        
+        val modeToUse = when {
+            target == -1 -> null // Explicit Standard requested
+            target != null && supportedModes.contains(target) -> target // Specific Valid Mode
+            target == null -> {
+                // Priority Selection: Night > HDR > Auto
+                when {
+                    supportedModes.contains(androidx.camera.extensions.ExtensionMode.NIGHT) -> androidx.camera.extensions.ExtensionMode.NIGHT
+                    supportedModes.contains(androidx.camera.extensions.ExtensionMode.HDR) -> androidx.camera.extensions.ExtensionMode.HDR
+                    supportedModes.contains(androidx.camera.extensions.ExtensionMode.AUTO) -> androidx.camera.extensions.ExtensionMode.AUTO
+                    else -> null // Standard
+                }
+            }
+            else -> null // Fallback
+        }
+        
+        val finalSelector = if (modeToUse != null) {
+            manager.getExtensionEnabledCameraSelector(baseSelector, modeToUse)
+        } else {
+            baseSelector
+        }
+        
+        _cameraSelector.value = finalSelector
+        _activeExtensionMode.value = modeToUse
+        Log.d("CameraViewModel", "Extension Mode: ${if(modeToUse != null) "Active ($modeToUse)" else "Standard"} (Target: $target, Auto-Selected: ${target == null})")
+        
+        // 3. Fetch Exposure Range for the selected camera
+        viewModelScope.launch {
+            try {
+               val cameraInfo = provider.availableCameraInfos.find { 
+                    finalSelector.filter(listOf(it)).isNotEmpty() 
+                }
+                if (cameraInfo != null) {
+                    val exposureState = cameraInfo.exposureState
+                    val range = exposureState.exposureCompensationRange
+                    _exposureRange.value = android.util.Range(range.lower, range.upper)
+                    // Reset index to 0 when switching cameras/modes unless we want to persist
+                    _exposureIndex.value = 0 
+                }
+            } catch (e: Exception) {
+                Log.e("CameraViewModel", "Error fetching exposure range", e)
+            }
+        }
+    }
+
     // Flash Mode: 2 = Off, 1 = On, 0 = Auto (Matches CameraX ImageCapture.FLASH_MODE_*), 3 = Torch
     private val _flashMode = MutableStateFlow(2) // Default to OFF
     val flashMode: StateFlow<Int> = _flashMode.asStateFlow()
 
-    // Transient State
+    // Determine if we need a UI Screen Flash (Front Camera + Flash ON/AUTO)
+    // Note: Auto (0) on front camera usually behaves like ON for screen flash if light is low, 
+    // but for simplicity we can trigger it for ON (1) and arguably AUTO (0).
+    // Let's implement specifically for ON (1) to start, or both.
+    // Logic: If Front Camera AND (Flash ON OR Flash Auto) -> Screen Flash
+    private val _shouldScreenFlash = MutableStateFlow(false)
+    val shouldScreenFlash: StateFlow<Boolean> = _shouldScreenFlash.asStateFlow()
 
-    private val _isCapturing = MutableStateFlow(false)
-    val isCapturing: StateFlow<Boolean> = _isCapturing.asStateFlow()
+    fun updateScreenFlashState(isFrontCamera: Boolean) {
+        val mode = _flashMode.value
+        // Screen Flash if Front Camera AND (On or Auto)
+        _shouldScreenFlash.value = isFrontCamera && (mode == 1 || mode == 0)
+    }
+
+
 
     private val _isRecording = MutableStateFlow(false)
     val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
+
+    // Shutter Event Flow
+    private val _shutterEvent = kotlinx.coroutines.flow.MutableSharedFlow<Unit>()
+    val shutterEvent = _shutterEvent.asSharedFlow()
 
     private val _recordingDuration = MutableStateFlow("00:00")
     val recordingDuration: StateFlow<String> = _recordingDuration.asStateFlow()
@@ -111,9 +346,49 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val _supportedResolutions = MutableStateFlow<List<Size>>(emptyList())
     val supportedResolutions: StateFlow<List<Size>> = _supportedResolutions.asStateFlow()
 
+    // Smart Zoom (Hardware Lens Detection)
+    private val _zoomOptions = MutableStateFlow<List<com.example.timestampcamera.util.ZoomConfig>>(emptyList())
+    val zoomOptions: StateFlow<List<com.example.timestampcamera.util.ZoomConfig>> = _zoomOptions.asStateFlow()
+
+    private val _compassHeading = MutableStateFlow(0f)
+    val compassHeading: StateFlow<Float> = _compassHeading.asStateFlow()
+
+    // Exposure Compensation
+    private val _exposureIndex = MutableStateFlow(0)
+    val exposureIndex: StateFlow<Int> = _exposureIndex.asStateFlow()
+    
+    private val _exposureRange = MutableStateFlow<android.util.Range<Int>>(android.util.Range(0, 0))
+    val exposureRange: StateFlow<android.util.Range<Int>> = _exposureRange.asStateFlow()
+
+    fun updateExposureIndex(index: Int) {
+        _exposureIndex.value = index
+    }
+
+    // Image Processing Engine (v2.00)
+    private val _imageBrightness = MutableStateFlow(1.0f)
+    val imageBrightness: StateFlow<Float> = _imageBrightness.asStateFlow()
+    
+    private val _imageContrast = MutableStateFlow(1.0f)
+    val imageContrast: StateFlow<Float> = _imageContrast.asStateFlow()
+    
+    private val _imageSaturation = MutableStateFlow(1.0f)
+    val imageSaturation: StateFlow<Float> = _imageSaturation.asStateFlow()
+
+    fun updateImageEnhancement(brightness: Float, contrast: Float, saturation: Float) {
+        _imageBrightness.value = brightness
+        _imageContrast.value = contrast
+        _imageSaturation.value = saturation
+    }
+
     private val settingsRepository = SettingsRepository(application)
     val cameraSettingsFlow: StateFlow<CameraSettings> = settingsRepository.cameraSettingsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CameraSettings())
+
+    val noteHistory: StateFlow<Set<String>> = settingsRepository.customNoteHistoryFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
+    val tagsHistory: StateFlow<Set<String>> = settingsRepository.tagsHistoryFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
     
     // Gallery
     private val galleryRepository = GalleryRepository(application)
@@ -132,7 +407,9 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
             cameraSettingsFlow.collect { settings ->
                 _overlayConfig.value = _overlayConfig.value.copy(
                     showDate = settings.dateWatermarkEnabled,
-                    showMap = settings.mapOverlayEnabled,
+                    showTime = settings.timeWatermarkEnabled,
+                    showAddress = settings.isAddressEnabled,
+                    showLatLon = settings.isCoordinatesEnabled,
                     customText = settings.customNote,
                     showCustomText = settings.customNote.isNotEmpty(),
                     datePattern = settings.dateFormat,
@@ -150,6 +427,13 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                          OverlayPosition.BOTTOM_RIGHT
                     },
                     compassEnabled = settings.compassEnabled,
+                    showCompass = settings.compassEnabled,
+                    compassPosition = try {
+                         OverlayPosition.valueOf(settings.compassPosition)
+                    } catch (e: Exception) {
+                         // Default fallback if parsing fails (or if not set)
+                         OverlayPosition.BOTTOM_LEFT 
+                    },
                     altitudeEnabled = settings.altitudeEnabled,
                     speedEnabled = settings.speedEnabled,
                     projectName = settings.projectName,
@@ -163,7 +447,6 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
 
                     templateId = settings.templateId,
 
-                    compassTapeEnabled = settings.compassTapeEnabled,
                     logoBitmap = settings.customLogoPath?.let { path ->
                          try {
                              BitmapFactory.decodeFile(path)
@@ -172,10 +455,6 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                          }
                     }
                 )
-
-                updateOverlayText(_locationData.value)
-                
-
             }
         }
     }
@@ -189,7 +468,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         }
 
     fun setLogo(uri: Uri?) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             if (uri == null) {
                 // Remove Logo
                 val logoFile = File(getApplication<Application>().filesDir, "custom_logo.png")
@@ -245,7 +524,11 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                 val now = System.currentTimeMillis()
                 if (now - lastUpdate > 100) { // Throttle Compass to 100ms
                     lastUpdate = now
-                    _overlayConfig.value = _overlayConfig.value.copy(azimuth = azimuth)
+                    _compassHeading.value = azimuth
+                    _overlayConfig.value = _overlayConfig.value.copy(
+                        azimuth = azimuth,
+                        compassHeading = azimuth // Fix: Update both fields
+                    )
                 }
             }
         }
@@ -318,9 +601,12 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
             "Lat: %.6f, Lon: %.6f".format(data.latitude, data.longitude)
         }
         
+        
+        val addressStr = com.example.timestampcamera.util.AddressFormatter.formatAddress(data, settings.addressResolution)
+
         _overlayConfig.value = _overlayConfig.value.copy(
             date = Date(),
-            address = data.address,
+            address = addressStr,
             latLon = latLonStr,
             altitudeSpeed = "Alt: %.2f M, Speed: %.2f km/h".format(data.altitude, data.speed)
         )
@@ -332,14 +618,16 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { settingsRepository.updateOverlayPosition(position.name) }
     }
 
-    fun toggleFlash() {
+    fun toggleFlash(isFrontCamera: Boolean) {
         // Cycle: Off (2) -> On (1) -> Auto (0) -> Torch (3) -> Off (2)
+        // Note: For Front Camera, we might want to skip Torch if not supported, but UI handles icon.
         _flashMode.value = when (_flashMode.value) {
             2 -> 1 // Off -> On
             1 -> 0 // On -> Auto
             0 -> 3 // Auto -> Torch
             else -> 2 // Torch -> Off
         }
+        updateScreenFlashState(isFrontCamera)
     }
     
     fun toggleTimer() {
@@ -373,10 +661,28 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     fun setShowLatLon(show: Boolean) { _overlayConfig.value = _overlayConfig.value.copy(showLatLon = show) }
     fun setShowAltitudeSpeed(show: Boolean) { _overlayConfig.value = _overlayConfig.value.copy(showAltitudeSpeed = show) }
     fun setShowResolution(show: Boolean) { _overlayConfig.value = _overlayConfig.value.copy(showResolution = show) }
-    fun setShowMap(show: Boolean) { _overlayConfig.value = _overlayConfig.value.copy(showMap = show) }
-    fun setMapOverlayEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateMapOverlay(enabled) }
+    fun updateUploadOnlyWifi(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateUploadOnlyWifi(enabled) }
     }
+    fun updateUploadLowBattery(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateUploadLowBattery(enabled) }
+    }
+    fun updateAddressResolution(resolution: com.example.timestampcamera.data.AddressResolution) {
+        viewModelScope.launch { settingsRepository.updateAddressResolution(resolution) }
+    }
+
+    // Fix imports collision if any, using fully qualified names where necessary
+
+
+    fun updateAddressEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateAddressEnabled(enabled) }
+    }
+
+    fun updateCoordinatesEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateCoordinatesEnabled(enabled) }
+    }
+
+
     
     fun setCustomNote(note: String) {
         viewModelScope.launch { settingsRepository.updateCustomNote(note) }
@@ -384,6 +690,30 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     
     fun setDateFormat(format: String) {
         viewModelScope.launch { settingsRepository.updateDateFormat(format) }
+    }
+    
+    fun setGridLinesEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateGridLines(enabled) }
+    }
+
+
+
+    fun setVirtualLevelerEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateVirtualLevelerEnabled(enabled) }
+    }
+
+    fun setVolumeShutterEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateVolumeShutterEnabled(enabled) }
+    }
+
+    fun triggerShutter() {
+        viewModelScope.launch {
+            _shutterEvent.emit(Unit)
+        }
+    }
+
+    fun setTextBackgroundEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateTextBackground(enabled) }
     }
     
     fun setThaiLanguage(enabled: Boolean) {
@@ -394,9 +724,6 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { settingsRepository.updateTextShadow(enabled) }
     }
 
-    fun setTextBackgroundEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateTextBackground(enabled) }
-    }
 
     fun setShowCompass(show: Boolean) { _overlayConfig.value = _overlayConfig.value.copy(showCompass = show) }
     fun setShowIndex(show: Boolean) { _overlayConfig.value = _overlayConfig.value.copy(showIndex = show) }
@@ -474,13 +801,26 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { settingsRepository.updateTextStrokeColor(color) }
     }
 
+    fun updateCompassPosition(position: String) {
+        viewModelScope.launch { settingsRepository.updateCompassPosition(position) }
+    }
+
+    fun updateCustomFields(fields: List<CustomField>) {
+        viewModelScope.launch { settingsRepository.updateCustomFields(fields) }
+    }
+    
+    fun addToNoteHistory(note: String) {
+        viewModelScope.launch { settingsRepository.addToNoteHistory(note) }
+    }
+
+    fun addToTagsHistory(tag: String) {
+        viewModelScope.launch { settingsRepository.addToTagsHistory(tag) }
+    }
+
     fun updateGoogleFontName(name: String) {
         viewModelScope.launch { settingsRepository.updateGoogleFontName(name) }
     }
 
-    fun updateMapBitmap(bitmap: android.graphics.Bitmap) {
-        _overlayConfig.update { it.copy(mapBitmap = bitmap) }
-    }
 
     // Date Format Settings
 
@@ -497,13 +837,15 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { settingsRepository.updateDateWatermark(enabled) }
     }
     
+    fun setTimeWatermarkEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateTimeWatermark(enabled) }
+    }
+    
     fun setShutterSoundEnabled(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.updateShutterSound(enabled) }
     }
     
-    fun setGridLinesEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateGridLines(enabled) }
-    }
+
 
     // Macro Logic Removed
 
@@ -514,7 +856,79 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    private var activeRecording: androidx.camera.video.Recording? = null
+
+    @OptIn(androidx.annotation.OptIn::class)
+    fun startRecording(
+        context: android.content.Context,
+        videoCapture: androidx.camera.video.VideoCapture<androidx.camera.video.Recorder>,
+        onVideoSaved: (Uri) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (activeRecording != null || _isRecording.value) return
+        
+        // Ensure Audio Permission
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            onError("Audio permission missing")
+            return
+        }
+
+        val name = "VID_${java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(Date())}.mp4"
+        val contentValues = android.content.ContentValues().apply {
+            put(MediaStore.Video.Media.DISPLAY_NAME, name)
+            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+            if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.P) {
+                 put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/TimestampCamera")
+            }
+        }
+
+        val mediaStoreOutputOptions = androidx.camera.video.MediaStoreOutputOptions
+            .Builder(context.contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setContentValues(contentValues)
+            .build()
+            
+        // Use PendingRecording to start
+        // Enable Audio
+        activeRecording = videoCapture.output
+            .prepareRecording(context, mediaStoreOutputOptions)
+            .withAudioEnabled() 
+            .start(androidx.core.content.ContextCompat.getMainExecutor(context)) { recordEvent ->
+                when(recordEvent) {
+                    is androidx.camera.video.VideoRecordEvent.Start -> {
+                        _isRecording.value = true
+                    }
+                    is androidx.camera.video.VideoRecordEvent.Status -> {
+                         // Update duration
+                         val stats = recordEvent.recordingStats
+                         val seconds = java.util.concurrent.TimeUnit.NANOSECONDS.toSeconds(stats.recordedDurationNanos)
+                         updateRecordingDuration(seconds)
+                    }
+                    is androidx.camera.video.VideoRecordEvent.Finalize -> {
+                        _isRecording.value = false
+                        activeRecording = null
+                        if (!recordEvent.hasError()) {
+                            val uri = recordEvent.outputResults.outputUri
+                            _lastCapturedUri.value = uri
+                            onVideoSaved(uri)
+                        } else {
+                            activeRecording?.close()
+                            activeRecording = null
+                            onError("Video capture failed: ${recordEvent.error}")
+                        }
+                    }
+                }
+            }
+    }
+
+    fun stopRecording() {
+        activeRecording?.stop()
+        activeRecording = null // cleanup
+        _isRecording.value = false
+    }
+
     fun updateRecordingDuration(seconds: Long) {
+
         val mins = seconds / 60
         val secs = seconds % 60
         _recordingDuration.value = String.format("%02d:%02d", mins, secs)
@@ -551,9 +965,32 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { settingsRepository.updateTargetResolution(width, height) }
     }
 
+    fun setCloudPath(path: String) {
+        viewModelScope.launch { settingsRepository.updateCloudPath(path) }
+    }
+
     fun loadSupportedResolutions(cameraSelector: CameraSelector) {
         viewModelScope.launch {
             _supportedResolutions.value = fetchSupportedResolutions(cameraSelector)
+            _zoomOptions.value = fetchZoomOptions(cameraSelector)
+        }
+    }
+
+    @OptIn(ExperimentalCamera2Interop::class)
+    suspend fun fetchZoomOptions(cameraSelector: CameraSelector): List<com.example.timestampcamera.util.ZoomConfig> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val cameraProvider = ProcessCameraProvider.getInstance(getApplication()).get()
+                val cameraInfo = cameraProvider.availableCameraInfos.find { 
+                    cameraSelector.filter(listOf(it)).isNotEmpty() 
+                } ?: return@withContext emptyList()
+                
+                val characteristics = Camera2CameraInfo.from(cameraInfo)
+                com.example.timestampcamera.util.ZoomUtils.calculateZoomConfig(characteristics)
+            } catch (e: Exception) {
+                Log.e("CameraViewModel", "Error fetching zoom options", e)
+                emptyList()
+            }
         }
     }
 
@@ -613,48 +1050,317 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun processAndSaveImage(bitmap: Bitmap, isFrontCamera: Boolean, onSaved: (android.net.Uri?) -> Unit) {
+    fun processAndSaveImage(
+        bitmap: Bitmap, 
+        isFrontCamera: Boolean, 
+        rotation: Float = 0f, 
+        exifAttributes: Map<String, String> = emptyMap(), 
+        onSaved: (android.net.Uri?) -> Unit
+    ) {
         _isCapturing.value = true
-        viewModelScope.launch {
+        // Offload entire pipeline to IO
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 // 1. Prepare Overlay Config
                 val currentConfig = _overlayConfig.value.copy(
                     date = Date(),
-                    resolution = "${bitmap.width} x ${bitmap.height}"
+                    resolution = "${bitmap.width} x ${bitmap.height}",
+                    compassHeading = _compassHeading.value, // Fix: Capture exact heading
+                    azimuth = _compassHeading.value
                 )
                 
                 // Fetch settings once
                 val currentSettings = cameraSettingsFlow.value
                 val location = locationManager.getLastLocation()
                 
-                // 2. Fetch Map (if enabled)
-                var mapBitmap: Bitmap? = null
-                if (currentSettings.mapOverlayEnabled) {
-                     if (location != null) {
-                         mapBitmap = fetchStaticMap(location.latitude, location.longitude)
-                     }
+                // 1.5 Update Config with latest Project Info from Settings
+                val configWithProjectInfo = currentConfig.copy(
+                    projectName = currentSettings.projectName,
+                    inspectorName = currentSettings.inspectorName,
+                    customText = currentSettings.customNote,
+                    tags = currentSettings.tags,
+                    showCustomText = currentSettings.customNote.isNotEmpty()
+                )
+
+                
+                
+                // 2. Prepare Bitmap (Rotate and Flip)
+                // 2a. Rotation Logic: Use manual rotation if provided, otherwise check Exif
+                var workingBitmap = if (rotation != 0f) {
+                    val matrix = android.graphics.Matrix().apply { postRotate(rotation) }
+                    try {
+                        val rotatedBitmap = Bitmap.createBitmap(
+                            bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+                        )
+                        rotatedBitmap // Return the new bitmap
+                    } catch (e: Exception) {
+                        Log.e("CameraViewModel", "Failed to rotate bitmap manually", e)
+                        bitmap
+                    }
+                } else {
+                    // Check Exif attributes for orientation (important for imported files)
+                    OverlayUtils.rotateBitmapIfNecessary(bitmap, exifAttributes)
+                }
+
+                // 2.5. Flip Bitmap (if Front Camera) - AFTER Physical Rotation
+                if (isFrontCamera && currentSettings.flipFrontPhoto) {
+                    val matrix = android.graphics.Matrix().apply { postScale(-1f, 1f) }
+                    try {
+                        val flippedBitmap = Bitmap.createBitmap(
+                            workingBitmap, 0, 0, workingBitmap.width, workingBitmap.height, matrix, true
+                        )
+                        if (flippedBitmap != workingBitmap) {
+                             // Note: Original recycled in finally block
+                             workingBitmap = flippedBitmap
+                        }
+                    } catch (e: Exception) {
+                        Log.e("CameraViewModel", "Error flipping bitmap", e)
+                    }
                 }
                 
-                val configWithMap = currentConfig.copy(mapBitmap = mapBitmap)
+                // 2.6. IMPORTANT: If we rotated/flipped, we must tell ExifUtils 
+                // to ignore the original orientation tag, otherwise modern galleries 
+                // might rotate it BACK to Portrait.
+                val finalExifAttributes = if (rotation != 0f || (isFrontCamera && currentSettings.flipFrontPhoto)) {
+                    exifAttributes.toMutableMap().apply {
+                        put(androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION, "1") // Normal
+                    }
+                } else {
+                    exifAttributes
+                }
                 
-                // 3. Draw Overlays (in background)
+                // 3. Build Snapshot (Unified Data)
+                val lines = mutableListOf<com.example.timestampcamera.util.WatermarkLine>()
+                
+                // Add lines based on Custom Order
+                currentSettings.customTextOrder.forEach { item ->
+                    when (item) {
+                        com.example.timestampcamera.data.WatermarkItemType.DATE_TIME -> {
+                            val dateFormat = java.text.SimpleDateFormat(
+                                if (configWithProjectInfo.showTime) "${configWithProjectInfo.datePattern} HH:mm:ss" else configWithProjectInfo.datePattern,
+                                if (configWithProjectInfo.useThaiLocale) java.util.Locale("th", "TH") else java.util.Locale.US
+                            )
+                            lines.add(com.example.timestampcamera.util.WatermarkLine(OverlayUtils.getFormattedDate(Date(), dateFormat.toPattern(), configWithProjectInfo.useThaiLocale)))
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.ADDRESS -> {
+                            if (configWithProjectInfo.showAddress) {
+                                val addressStr = com.example.timestampcamera.util.AddressFormatter.formatAddress(_locationData.value, currentSettings.addressResolution)
+                                addressStr.split("\n").forEach {
+                                    lines.add(com.example.timestampcamera.util.WatermarkLine(it))
+                                }
+                            }
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.GPS -> {
+                            if (configWithProjectInfo.showLatLon && configWithProjectInfo.latLon.isNotEmpty()) {
+                                lines.add(com.example.timestampcamera.util.WatermarkLine(configWithProjectInfo.latLon))
+                            }
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.COMPASS -> {
+                             if (configWithProjectInfo.showCompass) {
+                                val h = configWithProjectInfo.azimuth
+                                val directions = arrayOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+                                val index = Math.round(((h % 360) / 45)).toInt() % 8
+                                lines.add(com.example.timestampcamera.util.WatermarkLine("${h.toInt()}° ${directions[index]}"))
+                            }
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.ALTITUDE_SPEED -> {
+                            val altSpeedParts = mutableListOf<String>()
+                            if (configWithProjectInfo.altitudeEnabled) altSpeedParts.add("Alt: %.1f m".format(configWithProjectInfo.altitude))
+                            if (configWithProjectInfo.speedEnabled) altSpeedParts.add("Spd: %.1f km/h".format(configWithProjectInfo.speed * 3.6f))
+                            if (altSpeedParts.isNotEmpty()) {
+                                lines.add(com.example.timestampcamera.util.WatermarkLine(altSpeedParts.joinToString(" ")))
+                            } else if (configWithProjectInfo.showAltitudeSpeed && configWithProjectInfo.altitudeSpeed.isNotEmpty()) {
+                                lines.add(com.example.timestampcamera.util.WatermarkLine(configWithProjectInfo.altitudeSpeed))
+                            }
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.PROJECT_NAME -> {
+                             if (configWithProjectInfo.projectName.isNotEmpty()) lines.add(com.example.timestampcamera.util.WatermarkLine("Project: ${configWithProjectInfo.projectName}"))
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.INSPECTOR_NAME -> {
+                             if (configWithProjectInfo.inspectorName.isNotEmpty()) lines.add(com.example.timestampcamera.util.WatermarkLine("Inspector: ${configWithProjectInfo.inspectorName}"))
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.NOTE -> {
+                             if (configWithProjectInfo.customText.isNotEmpty()) lines.add(com.example.timestampcamera.util.WatermarkLine(configWithProjectInfo.customText))
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.TAGS -> {
+                             if (configWithProjectInfo.tags.isNotEmpty()) lines.add(com.example.timestampcamera.util.WatermarkLine(configWithProjectInfo.tags))
+                        }
+
+                        com.example.timestampcamera.data.WatermarkItemType.CUSTOM_TEXT -> {
+                            // Fallback for generic custom text if needed, or alias to Note
+                             if (configWithProjectInfo.customText.isNotEmpty()) lines.add(com.example.timestampcamera.util.WatermarkLine(configWithProjectInfo.customText))
+                        }
+                        com.example.timestampcamera.data.WatermarkItemType.LOGO -> {
+                            // Logo is handled by OverlayUtils.drawOverlayFromSnapshot directly via config.logoBitmap/Path
+                            // No text line needed for logo in this list
+                        }
+                    }
+                }
+                
+                val snapshot = com.example.timestampcamera.util.WatermarkSnapshot(
+                    lines = lines,
+                    compassHeading = if (configWithProjectInfo.compassEnabled) configWithProjectInfo.compassHeading else null
+                )
+
+                // 4. Draw Overlays (using Snapshot)
                 val overlayedBitmap = withContext(Dispatchers.Default) {
-                    OverlayUtils.drawOverlayOnBitmap(bitmap, configWithMap)
+                     OverlayUtils.drawOverlayFromSnapshot(workingBitmap, snapshot, configWithProjectInfo)
                 }
                 
                 // 4. Save Image (in IO)
                 
+                // Generate Dynamic Filename
+                val generatedFileName = com.example.timestampcamera.util.FileNameGenerator.generateFileName(
+                    format = currentSettings.fileNameFormat,
+                    date = Date(),
+                    note = if (configWithProjectInfo.customText.isNotEmpty()) configWithProjectInfo.customText else "Note",
+                    address = if (_locationData.value.address.isNotEmpty()) _locationData.value.address else "location",
+                    index = 1 // Basic index for now
+                )
+
+                // 4a. Save Original if enabled
+                var originalUri: Uri? = null
+                if (currentSettings.saveOriginalPhoto) {
+                   originalUri = ImageSaver.saveImage(
+                        bitmap = workingBitmap, // Clean version (flipped if needed)
+                        settings = currentSettings,
+                        context = getApplication(),
+                        isFrontCamera = isFrontCamera,
+                        location = location,
+                        customFileName = generatedFileName + "_original"
+                   )
+                }
+
+                // 4b. Save Watermarked
                 val uri = ImageSaver.saveImage(
                     bitmap = overlayedBitmap,
                     settings = currentSettings,
                     context = getApplication(),
                     isFrontCamera = isFrontCamera,
-                    location = location
+                    location = location,
+                    customFileName = generatedFileName
                 )
                 
-                // 4. Update UI
-                _lastCapturedUri.value = uri
-                onSaved(uri)
+                // Write EXIF Tags & AI Analysis
+                if (uri != null) {
+                    // 1. Manual Tags
+                    val manualTags = currentSettings.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                    
+                    // 2. AI Tags (Analyze original bitmap for best quality)
+                    try {
+                         // Run analysis (suspend)
+                         // Note: We use the *original* bitmap (before overlay) for better detection, 
+                         // or we could use 'workingBitmap' which is already flipped if needed.
+                         val aiTags = com.example.timestampcamera.util.ImageTaggingHelper.analyzeImage(workingBitmap)
+                         if (aiTags.isNotEmpty()) {
+                             manualTags.addAll(aiTags)
+                             android.util.Log.d("CameraViewModel", "AI Tags Added: $aiTags")
+                             
+                             // Optional: Show toast for feedback?
+                             withContext(Dispatchers.Main) {
+                                 android.widget.Toast.makeText(getApplication(), "AI Tags: ${aiTags.joinToString()}", android.widget.Toast.LENGTH_SHORT).show()
+                             }
+                         }
+                    } catch (e: Exception) {
+                        android.util.Log.e("CameraViewModel", "AI Analysis Error", e)
+                    }
+
+                    // Write All Tags
+                    com.example.timestampcamera.util.ExifUtils.writeTagsToExif(getApplication(), uri, manualTags)
+                    com.example.timestampcamera.util.ExifUtils.saveExifAttributes(getApplication(), uri, finalExifAttributes)
+                    
+                    // 3. Trigger Cloud Sync (if Note or Cloud Path is set)
+                    val note = currentSettings.customNote.trim()
+                    val cloudPath = currentSettings.cloudPath.trim()
+                    
+                    if (note.isNotEmpty() || cloudPath.isNotEmpty()) {
+                        try {
+                        // Construct Full Target Path: e.g. "Work/2024" + "Site A" -> "Work/2024/Site A"
+                        // If Note is empty -> "Work/2024"
+                        // If CloudPath is empty -> "Site A"
+                        val fullDrivePath = if (cloudPath.isNotEmpty()) {
+                            if (note.isNotEmpty()) "$cloudPath/$note" else cloudPath
+                        } else {
+                            note
+                        }
+
+                            // Build Constraints
+                            val networkType = if (currentSettings.uploadOnlyWifi) androidx.work.NetworkType.UNMETERED else androidx.work.NetworkType.CONNECTED
+                            val constraintBuilder = androidx.work.Constraints.Builder()
+                                .setRequiredNetworkType(networkType)
+                            
+                            if (currentSettings.uploadLowBattery) {
+                                constraintBuilder.setRequiresBatteryNotLow(true)
+                            }
+                            val uploadConstraints = constraintBuilder.build()
+
+                            // Pass URI directly to Worker (safe for Scoped Storage)
+                            val uploadRequest = androidx.work.OneTimeWorkRequestBuilder<com.example.timestampcamera.worker.FileUploadWorker>()
+                                .setInputData(
+                                    androidx.work.workDataOf(
+                                        "FILE_PATH" to uri.toString(),
+                                        "FOLDER_NAME" to fullDrivePath
+                                    )
+                                )
+                                .setConstraints(uploadConstraints)
+                                // Intelligent Retry: Exponential Backoff starting at 10 seconds
+                                .setBackoffCriteria(
+                                    androidx.work.BackoffPolicy.EXPONENTIAL,
+                                    10,
+                                    java.util.concurrent.TimeUnit.SECONDS
+                                )
+                                .build()
+                            
+                            // 3b. Prepare Original Photo Upload (if exists)
+                            var uploadOriginalRequest: androidx.work.OneTimeWorkRequest? = null
+                        
+                            if (originalUri != null) {
+                                try {
+                                    val originalDrivePath = "$fullDrivePath/Original"
+                                    uploadOriginalRequest = androidx.work.OneTimeWorkRequestBuilder<com.example.timestampcamera.worker.FileUploadWorker>()
+                                        .setInputData(
+                                            androidx.work.workDataOf(
+                                                "FILE_PATH" to originalUri.toString(),
+                                                "FOLDER_NAME" to originalDrivePath
+                                            )
+                                        )
+                                        .setConstraints(uploadConstraints)
+                                        .setBackoffCriteria(
+                                            androidx.work.BackoffPolicy.EXPONENTIAL,
+                                            10,
+                                            java.util.concurrent.TimeUnit.SECONDS
+                                        )
+                                        .build()
+                                } catch (e: Exception) {
+                                    android.util.Log.e("CameraViewModel", "Error prep original upload", e)
+                                }
+                            }
+                            
+                            // Execute Chained Work to prevent Race Condition on Folder Creation
+                            // 1. Upload Normal -> Creates "Site A"
+                            // 2. Upload Original -> Finds "Site A", Creates "Original" inside
+                            val workManager = androidx.work.WorkManager.getInstance(getApplication())
+                            var chain = workManager.beginWith(uploadRequest)
+                            
+                            if (uploadOriginalRequest != null) {
+                                chain = chain.then(uploadOriginalRequest)
+                            }
+                            
+                            chain.enqueue()
+                            android.util.Log.d("CameraViewModel", "Enqueued Upload Chain. Original: ${originalUri != null}")
+                        } catch (e: Exception) {
+                            android.util.Log.e("CameraViewModel", "Error in cloud upload work", e)
+                        }
+                    }
+                
+                // 4. Update UI (Main Thread)
+                withContext(Dispatchers.Main) {
+                    _lastCapturedUri.value = uri
+                    // Refresh gallery list to include the new photo
+                    loadRecentMedia()
+                    onSaved(uri)
+                }
+                } // End if (uri != null)
                 
                 // Cleanup overlayed bitmap if different from original
                 if (overlayedBitmap != bitmap) {
@@ -662,35 +1368,25 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                 }
             } catch (e: Exception) {
                 Log.e("CameraViewModel", "Error processing image", e)
-                onSaved(null)
+                withContext(Dispatchers.Main) {
+                    onSaved(null)
+                }
             } finally {
-                _isCapturing.value = false
-                bitmap.recycle() // Recycle the original source bitmap from CameraX
+                withContext(Dispatchers.Main) {
+                    _isCapturing.value = false
+                }
+                if (!bitmap.isRecycled) {
+                    bitmap.recycle() // Recycle the original source bitmap from CameraX
+                }
             }
         }
     }
     
-    private suspend fun fetchStaticMap(lat: Double, lon: Double): Bitmap? {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Using OpenStreetMap.de Static Map API (Free, no key required)
-                // Attribution required: © OpenStreetMap contributors
-                val urlString = "https://staticmap.openstreetmap.de/staticmap.php?center=$lat,$lon&zoom=15&size=400x400&maptype=mapnik"
-                val url = java.net.URL(urlString)
-                val connection = url.openConnection() as java.net.HttpURLConnection
-                connection.doInput = true
-                connection.connect()
-                val input: java.io.InputStream = connection.inputStream
-                BitmapFactory.decodeStream(input)
-            } catch (e: Exception) {
-                Log.e("CameraViewModel", "Error fetching static map", e)
-                null
-            }
-        }
-    }
 
     override fun onCleared() {
         super.onCleared()
+        orientationEventListener?.disable()
+        orientationEventListener = null
         shutterSound.release()
     }
     
@@ -747,14 +1443,17 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     fun saveImportedImage(onSaved: (Uri?) -> Unit) {
         val bitmap = _importedBitmap.value ?: return
         
-        // Use the generic process loop but with the imported bitmap
-        // We clone the bitmap because processAndSaveImage recycles the input
-        val bitmapCopy = bitmap.copy(bitmap.config, true)
-        
-        processAndSaveImage(bitmapCopy, isFrontCamera = false, onSaved = { uri ->
-            onSaved(uri)
-            closeEditor() // Exit editor on save
-        })
+        viewModelScope.launch(Dispatchers.IO) {
+            // Use the generic process loop but with the imported bitmap
+            // We clone the bitmap because processAndSaveImage recycles the input
+            val bitmapCopy = bitmap.copy(bitmap.config, true)
+            
+            // processAndSaveImage handles its own IO dispatch, but calling it here is fine
+            processAndSaveImage(bitmapCopy, isFrontCamera = false, onSaved = { uri ->
+                onSaved(uri)
+                closeEditor() // Exit editor on save (will be called on Main from processAndSaveImage)
+            })
+        }
     }
     fun updateTemplateId(id: Int) {
         viewModelScope.launch {
@@ -762,11 +1461,38 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun updateCompassTapeEnabled(enabled: Boolean) {
+    fun updateTextOrder(order: List<com.example.timestampcamera.data.WatermarkItemType>) {
         viewModelScope.launch {
-            settingsRepository.updateCompassTapeEnabled(enabled)
+            settingsRepository.updateTextOrder(order)
         }
     }
+
+    // Tag Management
+    fun addAvailableTag(tag: String) {
+        viewModelScope.launch { settingsRepository.addAvailableTag(tag) }
+    }
+
+    fun removeAvailableTag(tag: String) {
+        viewModelScope.launch { settingsRepository.removeAvailableTag(tag) }
+    }
+
+    fun clearAvailableTags() {
+        viewModelScope.launch { settingsRepository.clearAvailableTags() }
+    }
+
+    fun importAvailableTags(tags: Set<String>) {
+        viewModelScope.launch { settingsRepository.updateAvailableTags(tags) }
+    }
+
+    fun updateSaveOriginalPhoto(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateSaveOriginalPhoto(enabled) }
+    }
+
+    fun updateFileNameFormat(format: com.example.timestampcamera.data.FileNameFormat) {
+        viewModelScope.launch { settingsRepository.updateFileNameFormat(format) }
+    }
+
+
 
     fun onLogoSelected(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {

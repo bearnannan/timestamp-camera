@@ -13,7 +13,22 @@ enum class ImageFormat {
     JPEG, PNG, WEBP
 }
 
+// Enum removed, utilizing definition in WatermarkSettings.kt
+
+
 data class CameraSettings(
+    val customTextOrder: List<WatermarkItemType> = listOf(
+        WatermarkItemType.DATE_TIME,
+        WatermarkItemType.GPS,
+        WatermarkItemType.COMPASS,
+        WatermarkItemType.ADDRESS,
+        WatermarkItemType.ALTITUDE_SPEED,
+        WatermarkItemType.PROJECT_NAME,
+        WatermarkItemType.INSPECTOR_NAME,
+        WatermarkItemType.NOTE,
+        WatermarkItemType.TAGS
+    ),
+
     val flipFrontPhoto: Boolean = true,
     val imageFormat: ImageFormat = ImageFormat.JPEG,
     val compressionQuality: Int = 90,
@@ -24,11 +39,14 @@ data class CameraSettings(
     val videoQuality: String = "FHD 1080p",
     val aspectRatio: String = "4:3",
     val dateWatermarkEnabled: Boolean = true,
+    val timeWatermarkEnabled: Boolean = true,
     val shutterSoundEnabled: Boolean = true,
     val gridLinesEnabled: Boolean = false,
-    val mapOverlayEnabled: Boolean = false,
+    val gridType: Int = 0, // 0=3x3, 1=Golden Ratio (Phi Grid)
+    val virtualLevelerEnabled: Boolean = false, // New Setting
+    val volumeShutterEnabled: Boolean = true, // Volume Key Shutter
     val customNote: String = "",
-    val dateFormat: String = "dd/MM/yyyy HH:mm",
+    val dateFormat: String = "dd/MM/yyyy",
     val isThaiLanguage: Boolean = false,
     val textShadowEnabled: Boolean = false,
     val textBackgroundEnabled: Boolean = false,
@@ -42,6 +60,9 @@ data class CameraSettings(
     val textAlpha: Int = 255, // 0-255
     val fontFamily: String = "sans", // sans, serif, monospace, cursive
     val overlayPosition: String = "BOTTOM_RIGHT", // Name of OverlayPosition enum
+    // Advanced Tag Management
+    val availableTags: Set<String> = emptySet(),
+    val compassPosition: String = "CENTER", // New Compass Position
     // Phase 16: Rich Data Overlays
     val compassEnabled: Boolean = false,
     val altitudeEnabled: Boolean = false,
@@ -56,8 +77,24 @@ data class CameraSettings(
     val textStrokeColor: Int = android.graphics.Color.BLACK,
     val googleFontName: String = "Roboto", // e.g. "Roboto", "Oswald"
     val templateId: Int = 0, // 0=Classic, 1=Modern, 2=Minimal
-    val compassTapeEnabled: Boolean = false,
-    val customLogoPath: String? = null // Path to locally saved PNG
+    // compassTapeEnabled Removed
+    val customLogoPath: String? = null, // Path to locally saved PNG
+    // Data Visibility
+    val isAddressEnabled: Boolean = true,
+    val isCoordinatesEnabled: Boolean = true,
+    val customFields: List<CustomField> = emptyList(), // New Custom Fields
+    val addressResolution: AddressResolution = AddressResolution.FULL_ADDRESS,
+    val saveOriginalPhoto: Boolean = false,
+    val fileNameFormat: FileNameFormat = FileNameFormat.TIMESTAMP_PROJECT,
+    val cloudPath: String = "", // Base folder path for Google Drive
+    val uploadOnlyWifi: Boolean = false,
+    val uploadLowBattery: Boolean = false
+)
+
+data class CustomField(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val label: String,
+    val value: String
 )
 
 
@@ -78,9 +115,12 @@ class SettingsRepository(private val context: Context) {
         val VIDEO_QUALITY = stringPreferencesKey("video_quality")
         val ASPECT_RATIO = stringPreferencesKey("aspect_ratio")
         val DATE_WATERMARK = booleanPreferencesKey("date_watermark")
+        val TIME_WATERMARK = booleanPreferencesKey("time_watermark")
         val SHUTTER_SOUND = booleanPreferencesKey("shutter_sound")
         val GRID_LINES = booleanPreferencesKey("grid_lines")
-        val MAP_OVERLAY = booleanPreferencesKey("map_overlay")
+        val GRID_TYPE = intPreferencesKey("grid_type") // New Key
+        val VIRTUAL_LEVELER_ENABLED = booleanPreferencesKey("virtual_leveler_enabled") // New Key
+        val VOLUME_SHUTTER_ENABLED = booleanPreferencesKey("volume_shutter_enabled")
         val CUSTOM_NOTE = stringPreferencesKey("custom_note")
         val DATE_FORMAT = stringPreferencesKey("date_format")
         val IS_THAI_LANGUAGE = booleanPreferencesKey("is_thai_language")
@@ -95,6 +135,7 @@ class SettingsRepository(private val context: Context) {
         val FONT_FAMILY = stringPreferencesKey("font_family")
         val OVERLAY_POSITION = stringPreferencesKey("overlay_position")
         val COMPASS_ENABLED = booleanPreferencesKey("compass_enabled")
+        val COMPASS_POSITION = stringPreferencesKey("compass_position") // New Key
         val ALTITUDE_ENABLED = booleanPreferencesKey("altitude_enabled")
         val SPEED_ENABLED = booleanPreferencesKey("speed_enabled")
         val PROJECT_NAME = stringPreferencesKey("project_name")
@@ -106,8 +147,21 @@ class SettingsRepository(private val context: Context) {
         val TEXT_STROKE_COLOR = intPreferencesKey("text_stroke_color")
         val GOOGLE_FONT_NAME = stringPreferencesKey("google_font_name")
         val TEMPLATE_ID = intPreferencesKey("template_id")
-        val COMPASS_TAPE_ENABLED = booleanPreferencesKey("compass_tape_enabled")
+        // COMPASS_TAPE_ENABLED Removed
         val CUSTOM_LOGO_PATH = stringPreferencesKey("custom_logo_path")
+        val CUSTOM_NOTE_HISTORY = stringSetPreferencesKey("custom_note_history")
+        val TAGS_HISTORY = stringSetPreferencesKey("tags_history")
+        val IS_ADDRESS_ENABLED = booleanPreferencesKey("is_address_enabled")
+        val IS_COORDINATES_ENABLED = booleanPreferencesKey("is_coordinates_enabled")
+        val CUSTOM_FIELDS = stringPreferencesKey("custom_fields")
+        val TEXT_ORDER = stringPreferencesKey("text_order")
+        val AVAILABLE_TAGS = stringSetPreferencesKey("available_tags")
+        val ADDRESS_RESOLUTION = stringPreferencesKey("address_resolution")
+        val SAVE_ORIGINAL_PHOTO = booleanPreferencesKey("save_original_photo")
+        val FILE_NAME_FORMAT = stringPreferencesKey("file_name_format")
+        val CLOUD_PATH = stringPreferencesKey("cloud_path")
+        val UPLOAD_ONLY_WIFI = booleanPreferencesKey("upload_only_wifi")
+        val UPLOAD_LOW_BATTERY = booleanPreferencesKey("upload_low_battery")
     }
 
 
@@ -128,6 +182,34 @@ class SettingsRepository(private val context: Context) {
             }
 
             CameraSettings(
+                customTextOrder = try {
+                    val orderStr = preferences[PreferencesKeys.TEXT_ORDER]
+                    if (orderStr.isNullOrBlank()) {
+                        listOf(
+                            WatermarkItemType.DATE_TIME,
+                            WatermarkItemType.GPS,
+                            WatermarkItemType.COMPASS,
+                            WatermarkItemType.ADDRESS,
+                            WatermarkItemType.ALTITUDE_SPEED,
+                            WatermarkItemType.PROJECT_NAME,
+                            WatermarkItemType.INSPECTOR_NAME,
+                            WatermarkItemType.NOTE,
+                            WatermarkItemType.TAGS,
+
+                        )
+                    } else {
+                        orderStr.split(",").mapNotNull { 
+                            try { WatermarkItemType.valueOf(it) } catch(e: Exception) { null } 
+                        }
+                    }
+                } catch (e: Exception) {
+                    listOf(
+                        WatermarkItemType.DATE_TIME, WatermarkItemType.GPS, WatermarkItemType.COMPASS,
+                        WatermarkItemType.ADDRESS, WatermarkItemType.ALTITUDE_SPEED,
+                        WatermarkItemType.PROJECT_NAME, WatermarkItemType.INSPECTOR_NAME, WatermarkItemType.NOTE, WatermarkItemType.TAGS,
+
+                    )
+                },
                 flipFrontPhoto = preferences[PreferencesKeys.FLIP_FRONT_PHOTO] ?: true,
                 imageFormat = imageFormat,
                 compressionQuality = preferences[PreferencesKeys.COMPRESSION_QUALITY] ?: 90,
@@ -138,11 +220,14 @@ class SettingsRepository(private val context: Context) {
                 videoQuality = preferences[PreferencesKeys.VIDEO_QUALITY] ?: "FHD 1080p",
                 aspectRatio = preferences[PreferencesKeys.ASPECT_RATIO] ?: "4:3",
                 dateWatermarkEnabled = preferences[PreferencesKeys.DATE_WATERMARK] ?: true,
+                timeWatermarkEnabled = preferences[PreferencesKeys.TIME_WATERMARK] ?: true,
                 shutterSoundEnabled = preferences[PreferencesKeys.SHUTTER_SOUND] ?: true,
                 gridLinesEnabled = preferences[PreferencesKeys.GRID_LINES] ?: false,
-                mapOverlayEnabled = preferences[PreferencesKeys.MAP_OVERLAY] ?: false,
+                gridType = preferences[PreferencesKeys.GRID_TYPE] ?: 0,
+                virtualLevelerEnabled = preferences[PreferencesKeys.VIRTUAL_LEVELER_ENABLED] ?: false,
+                volumeShutterEnabled = preferences[PreferencesKeys.VOLUME_SHUTTER_ENABLED] ?: true,
                 customNote = preferences[PreferencesKeys.CUSTOM_NOTE] ?: "",
-                dateFormat = preferences[PreferencesKeys.DATE_FORMAT] ?: "dd/MM/yyyy HH:mm",
+                dateFormat = preferences[PreferencesKeys.DATE_FORMAT] ?: "dd/MM/yyyy",
                 isThaiLanguage = preferences[PreferencesKeys.IS_THAI_LANGUAGE] ?: false,
                 textShadowEnabled = preferences[PreferencesKeys.TEXT_SHADOW] ?: false,
                 textBackgroundEnabled = preferences[PreferencesKeys.TEXT_BACKGROUND] ?: false,
@@ -166,8 +251,38 @@ class SettingsRepository(private val context: Context) {
                 textStrokeColor = preferences[PreferencesKeys.TEXT_STROKE_COLOR] ?: android.graphics.Color.BLACK,
                 googleFontName = preferences[PreferencesKeys.GOOGLE_FONT_NAME] ?: "Roboto",
                 templateId = preferences[PreferencesKeys.TEMPLATE_ID] ?: 0,
-                compassTapeEnabled = preferences[PreferencesKeys.COMPASS_TAPE_ENABLED] ?: false,
-                customLogoPath = preferences[PreferencesKeys.CUSTOM_LOGO_PATH]
+                // compassTapeEnabled Removed
+                compassPosition = preferences[PreferencesKeys.COMPASS_POSITION] ?: "CENTER",
+                customLogoPath = preferences[PreferencesKeys.CUSTOM_LOGO_PATH],
+                isAddressEnabled = preferences[PreferencesKeys.IS_ADDRESS_ENABLED] ?: true,
+                isCoordinatesEnabled = preferences[PreferencesKeys.IS_COORDINATES_ENABLED] ?: true,
+                cloudPath = preferences[PreferencesKeys.CLOUD_PATH] ?: "",
+                customFields = try {
+                    val jsonStr = preferences[PreferencesKeys.CUSTOM_FIELDS] ?: "[]"
+                    val jsonArray = org.json.JSONArray(jsonStr)
+                    val list = mutableListOf<CustomField>()
+                    for (i in 0 until jsonArray.length()) {
+                        val obj = jsonArray.getJSONObject(i)
+                        list.add(CustomField(
+                            id = obj.optString("id"),
+                            label = obj.optString("label"),
+                            value = obj.optString("value")
+                        ))
+                    }
+                    list
+                } catch (e: Exception) {
+                    emptyList()
+                },
+                availableTags = preferences[PreferencesKeys.AVAILABLE_TAGS] ?: emptySet(),
+                addressResolution = try {
+                    AddressResolution.valueOf(preferences[PreferencesKeys.ADDRESS_RESOLUTION] ?: "FULL_ADDRESS")
+                } catch (e: Exception) { AddressResolution.FULL_ADDRESS },
+                saveOriginalPhoto = preferences[PreferencesKeys.SAVE_ORIGINAL_PHOTO] ?: false,
+                fileNameFormat = try {
+                    FileNameFormat.valueOf(preferences[PreferencesKeys.FILE_NAME_FORMAT] ?: "TIMESTAMP_PROJECT")
+                } catch (e: Exception) { FileNameFormat.TIMESTAMP_PROJECT },
+                uploadOnlyWifi = preferences[PreferencesKeys.UPLOAD_ONLY_WIFI] ?: false,
+                uploadLowBattery = preferences[PreferencesKeys.UPLOAD_LOW_BATTERY] ?: false
             )
         }
 
@@ -232,6 +347,12 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    suspend fun updateTimeWatermark(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TIME_WATERMARK] = enabled
+        }
+    }
+
     suspend fun updateShutterSound(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.SHUTTER_SOUND] = enabled
@@ -244,11 +365,24 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    suspend fun updateMapOverlay(enabled: Boolean) {
+    suspend fun updateGridType(type: Int) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.MAP_OVERLAY] = enabled
+            preferences[PreferencesKeys.GRID_TYPE] = type
         }
     }
+
+    suspend fun updateVirtualLevelerEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.VIRTUAL_LEVELER_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateVolumeShutterEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.VOLUME_SHUTTER_ENABLED] = enabled
+        }
+    }
+
 
     suspend fun updateCustomNote(note: String) {
         context.dataStore.edit { preferences ->
@@ -268,11 +402,7 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    suspend fun updateCompassTapeEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.COMPASS_TAPE_ENABLED] = enabled
-        }
-    }
+    // updateCompassTapeEnabled Removed
 
     suspend fun updateCustomLogoPath(path: String?) {
         context.dataStore.edit { preferences ->
@@ -411,5 +541,133 @@ class SettingsRepository(private val context: Context) {
             preferences[PreferencesKeys.GOOGLE_FONT_NAME] = fontName
         }
     }
-}
 
+    val customNoteHistoryFlow: Flow<Set<String>> = context.dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.CUSTOM_NOTE_HISTORY] ?: emptySet()
+        }
+
+    suspend fun addToNoteHistory(note: String) {
+        if (note.isBlank()) return
+        context.dataStore.edit { preferences ->
+            val currentHistory = preferences[PreferencesKeys.CUSTOM_NOTE_HISTORY] ?: emptySet()
+            // Limit history size to 10 distinct items
+            val newHistory = (currentHistory + note).toList().takeLast(10).toSet() 
+            preferences[PreferencesKeys.CUSTOM_NOTE_HISTORY] = newHistory
+        }
+    }
+
+    suspend fun updateCompassPosition(position: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.COMPASS_POSITION] = position
+        }
+    }
+
+    val tagsHistoryFlow: Flow<Set<String>> = context.dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.TAGS_HISTORY] ?: emptySet()
+        }
+
+    suspend fun addToTagsHistory(tag: String) {
+        if (tag.isBlank()) return
+        context.dataStore.edit { preferences ->
+            val currentHistory = preferences[PreferencesKeys.TAGS_HISTORY] ?: emptySet()
+            // Limit history size to 10 distinct items
+            // Convert to list to use takeLast, then back to set
+            val newHistory = (currentHistory + tag).toList().takeLast(10).toSet() 
+            preferences[PreferencesKeys.TAGS_HISTORY] = newHistory
+        }
+    }
+
+    suspend fun updateAddressEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_ADDRESS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateTextOrder(order: List<WatermarkItemType>) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TEXT_ORDER] = order.joinToString(",") { it.name }
+        }
+    }
+
+    suspend fun updateCoordinatesEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_COORDINATES_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateCustomFields(fields: List<CustomField>) {
+        val jsonArray = org.json.JSONArray()
+        fields.forEach { field ->
+            val jsonObject = org.json.JSONObject()
+            jsonObject.put("id", field.id)
+            jsonObject.put("label", field.label)
+            jsonObject.put("value", field.value)
+            jsonArray.put(jsonObject)
+        }
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CUSTOM_FIELDS] = jsonArray.toString()
+        }
+    }
+
+    suspend fun addAvailableTag(tag: String) {
+        if (tag.isBlank()) return
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.AVAILABLE_TAGS] ?: emptySet()
+            preferences[PreferencesKeys.AVAILABLE_TAGS] = current + tag
+        }
+    }
+
+    suspend fun removeAvailableTag(tag: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.AVAILABLE_TAGS] ?: emptySet()
+            preferences[PreferencesKeys.AVAILABLE_TAGS] = current - tag
+        }
+    }
+
+    suspend fun clearAvailableTags() {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AVAILABLE_TAGS] = emptySet()
+        }
+    }
+    
+    suspend fun updateAvailableTags(newTags: Set<String>) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.AVAILABLE_TAGS] ?: emptySet()
+            preferences[PreferencesKeys.AVAILABLE_TAGS] = current + newTags
+        }
+    }
+
+
+
+    suspend fun updateAddressResolution(resolution: AddressResolution) {
+        context.dataStore.edit { it[PreferencesKeys.ADDRESS_RESOLUTION] = resolution.name }
+    }
+
+    suspend fun updateSaveOriginalPhoto(enabled: Boolean) {
+        context.dataStore.edit { it[PreferencesKeys.SAVE_ORIGINAL_PHOTO] = enabled }
+    }
+
+    suspend fun updateFileNameFormat(format: FileNameFormat) {
+        context.dataStore.edit { it[PreferencesKeys.FILE_NAME_FORMAT] = format.name }
+    }
+
+    suspend fun updateCloudPath(path: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CLOUD_PATH] = path
+        }
+    }
+
+    suspend fun updateUploadOnlyWifi(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.UPLOAD_ONLY_WIFI] = enabled
+        }
+    }
+
+    suspend fun updateUploadLowBattery(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.UPLOAD_LOW_BATTERY] = enabled
+        }
+    }
+}

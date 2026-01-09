@@ -18,7 +18,10 @@ class GalleryRepository(private val context: Context) {
             MediaStore.MediaColumns._ID,
             MediaStore.MediaColumns.DISPLAY_NAME,
             MediaStore.MediaColumns.DATE_TAKEN,
-            MediaStore.Files.FileColumns.MEDIA_TYPE
+            MediaStore.MediaColumns.DATE_MODIFIED,
+            MediaStore.Files.FileColumns.MEDIA_TYPE,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+            MediaStore.MediaColumns.DATA
         )
 
         // Query params - Select only Images and Videos
@@ -45,13 +48,24 @@ class GalleryRepository(private val context: Context) {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
                 val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
                 val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_TAKEN)
+                val dateModColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_MODIFIED)
                 val typeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
+                val bucketColumn = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
+                val dataColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATA)
 
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
                     val name = cursor.getString(nameColumn) ?: "Unknown"
-                    val dateTaken = cursor.getLong(dateColumn)
+                    var dateTaken = cursor.getLong(dateColumn)
+                    
+                    // Fallback to Date Modified if Date Taken is missing/invalid (e.g. 1970)
+                    if (dateTaken <= 0 && dateModColumn >= 0) {
+                        dateTaken = cursor.getLong(dateModColumn) * 1000 // Convert seconds to millis
+                    }
+                    
                     val typeInt = cursor.getInt(typeColumn)
+                    val bucketName = if (bucketColumn >= 0) cursor.getString(bucketColumn) ?: "Unknown" else "Unknown"
+                    val path = if (dataColumn >= 0) cursor.getString(dataColumn) ?: "" else ""
                     
                     val contentUri: Uri = if (typeInt == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
                          ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
@@ -67,7 +81,9 @@ class GalleryRepository(private val context: Context) {
                             uri = contentUri,
                             dateTaken = Date(dateTaken),
                             name = name,
-                            type = mediaType
+                            type = mediaType,
+                            path = path,
+                            bucketName = bucketName
                         )
                     )
                 }

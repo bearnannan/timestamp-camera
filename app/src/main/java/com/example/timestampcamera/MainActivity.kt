@@ -7,10 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.LifecycleCameraController
+
 import androidx.camera.view.CameraController
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -136,6 +140,25 @@ class MainActivity : ComponentActivity() {
             LifecycleCameraController.VIDEO_CAPTURE
         )
     }
+
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        // Intercept Volume Keys for Shutter
+        return when (keyCode) {
+            android.view.KeyEvent.KEYCODE_VOLUME_UP,
+            android.view.KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                val viewModel: CameraViewModel = androidx.lifecycle.ViewModelProvider(this)[CameraViewModel::class.java]
+                val settings = viewModel.cameraSettingsFlow.value
+                
+                if (settings.volumeShutterEnabled) {
+                    viewModel.triggerShutter()
+                    true // Consume event
+                } else {
+                    super.onKeyDown(keyCode, event)
+                }
+            }
+            else -> super.onKeyDown(keyCode, event)
+        }
+    }
 }
 
 @Composable
@@ -187,7 +210,92 @@ fun CameraContent(
                 LifecycleCameraController.IMAGE_CAPTURE or
                 LifecycleCameraController.VIDEO_CAPTURE
             )
+            // Optimize for Quality
+            imageCaptureMode = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+            
+            // 1. Resolution Strategy: Highest Available (Default 4:3)
+            imageCaptureResolutionSelector = androidx.camera.core.resolutionselector.ResolutionSelector.Builder()
+                .setAspectRatioStrategy(androidx.camera.core.resolutionselector.AspectRatioStrategy(
+                    androidx.camera.core.AspectRatio.RATIO_4_3,
+                    androidx.camera.core.resolutionselector.AspectRatioStrategy.FALLBACK_RULE_AUTO
+                ))
+                .setResolutionStrategy(androidx.camera.core.resolutionselector.ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
+                .build()
+
             cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            
+            // Ultra HDR Configuration (Android 14+)
+                 try {
+                     // Enable Ultra HDR (JPEG with Gainmap)
+                     // Using property access syntax to avoid "Unresolved reference" for setter
+                     // imageCaptureFormat = ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR
+                 } catch (e: Exception) {
+                     Log.e("MainActivity", "Failed to set Ultra HDR", e)
+                 }
+        }
+    }
+    
+    // EXTENSIONS: Initialize and Bind
+    val currentCameraSelector by viewModel.cameraSelector.collectAsState()
+    val activeExtensionMode by viewModel.activeExtensionMode.collectAsState()
+    val isCapturing by viewModel.isCapturing.collectAsState()
+    
+    LaunchedEffect(Unit) {
+        val providerFuture = ProcessCameraProvider.getInstance(context)
+        providerFuture.addListener({
+            try {
+                val provider = providerFuture.get()
+                viewModel.initializeExtensions(context, provider)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to get CameraProvider", e)
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+    
+    // Sync Selector & Use Cases: Update controller when ViewModel's selector changes
+    // CRITICAL FIX: Disable VideoCapture when Extensions are active to prevent crashes (Bokeh/HDR do not support Video)
+    LaunchedEffect(currentCameraSelector, activeExtensionMode) {
+        if (cameraController.cameraSelector != currentCameraSelector) {
+            cameraController.cameraSelector = currentCameraSelector
+        }
+        
+        val isExtensionActive = activeExtensionMode != null && activeExtensionMode != 0
+        if (isExtensionActive) {
+            // Extensions active -> Image Capture ONLY
+            cameraController.setEnabledUseCases(LifecycleCameraController.IMAGE_CAPTURE)
+        } else {
+            // Standard Mode -> Image + Video
+            cameraController.setEnabledUseCases(
+                LifecycleCameraController.IMAGE_CAPTURE or LifecycleCameraController.VIDEO_CAPTURE
+            )
+        }
+    }
+
+    // Camera2Interop Tuning (Pro Mode)
+    // Goal: Reduce Noise & Fix Darkness using specific CaptureRequest keys
+    LaunchedEffect(cameraController) {
+        cameraController.cameraControl?.let { cameraControl ->
+            try {
+                val camera2Control = androidx.camera.camera2.interop.Camera2CameraControl.from(cameraControl)
+                
+                val captureRequestOptions = androidx.camera.camera2.interop.CaptureRequestOptions.Builder()
+                    // 1. Reduce Noise: Lower FPS range allows longer exposure per frame
+                    .setCaptureRequestOption(
+                        android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                        android.util.Range(15, 30) // Allow dropping to 15fps in dark
+                    )
+                    // 2. High Quality Noise Reduction
+                    .setCaptureRequestOption(
+                        android.hardware.camera2.CaptureRequest.NOISE_REDUCTION_MODE,
+                        android.hardware.camera2.CaptureRequest.NOISE_REDUCTION_MODE_HIGH_QUALITY
+                    )
+                    .build()
+        
+                camera2Control.addCaptureRequestOptions(captureRequestOptions)
+            } catch (e: Exception) {
+                // Ignore if failed to apply
+                Log.e("CameraTuning", "Failed to apply Pro Tuning", e)
+            }
         }
     }
     
@@ -195,7 +303,7 @@ fun CameraContent(
     val flashMode by viewModel.flashMode.collectAsState()
     
     // Settings States from ViewModel
-    val isCapturing by viewModel.isCapturing.collectAsState()
+
     val isRecording by viewModel.isRecording.collectAsState()
     val recordingDuration by viewModel.recordingDuration.collectAsState()
     
@@ -237,21 +345,36 @@ fun CameraContent(
     }
 
     // ========== VIDEO WATERMARKING ==========
-    LaunchedEffect(Unit) {
-        val effect = VideoWatermarkUtils.createOverlayEffect {
-            viewModel.overlayConfig.value
-        }
-        cameraController.setEffects(setOf(effect))
-    }
+    // Moved to CameraScreen logic to bind only in Video Mode
 
-    // Sync Photo Resolution to Controller
-    LaunchedEffect(cameraSettings.targetWidth, cameraSettings.targetHeight) {
+
+    // Sync Resolution & Aspect Ratio (Unified to prevent conflicts)
+    LaunchedEffect(cameraSettings.aspectRatio, cameraSettings.targetWidth, cameraSettings.targetHeight) {
+        // Option A: Manual Fixed Resolution (Target Size)
         if (cameraSettings.targetWidth > 0 && cameraSettings.targetHeight > 0) {
-            cameraController.imageCaptureTargetSize = CameraController.OutputSize(
+            cameraController.imageCaptureTargetSize = androidx.camera.view.CameraController.OutputSize(
                 Size(cameraSettings.targetWidth, cameraSettings.targetHeight)
             )
-        } else {
-            cameraController.imageCaptureTargetSize = null
+        } 
+        // Option B: Aspect Ratio + Max Quality (Default)
+        else {
+            val ratio = cameraSettings.aspectRatio
+            val targetAspectRatio = when (ratio) {
+                "4:3" -> androidx.camera.core.AspectRatio.RATIO_4_3
+                "16:9" -> androidx.camera.core.AspectRatio.RATIO_16_9
+                else -> androidx.camera.core.AspectRatio.RATIO_4_3
+            }
+
+            // Force Highest Available Resolution for the selected Aspect Ratio
+            cameraController.imageCaptureResolutionSelector = androidx.camera.core.resolutionselector.ResolutionSelector.Builder()
+                .setAspectRatioStrategy(
+                    androidx.camera.core.resolutionselector.AspectRatioStrategy(
+                        targetAspectRatio,
+                        androidx.camera.core.resolutionselector.AspectRatioStrategy.FALLBACK_RULE_AUTO
+                    )
+                )
+                .setResolutionStrategy(androidx.camera.core.resolutionselector.ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
+                .build()
         }
     }
 
@@ -399,108 +522,145 @@ fun CameraContent(
         )
     }
 
-    if (currentScreen == "camera") {
-        CameraScreen(
-            modifier = Modifier.fillMaxSize(),
-            cameraController = cameraController,
-            flashMode = flashMode,
-            onFlashClick = { 
-                viewModel.toggleFlash()
-            },
-            onMenuClick = { 
-                // Settings handled in CameraScreen
-            },
 
-            onZoomChange = { zoom ->
-                cameraController.setZoomRatio(zoom)
-            },
-            onModeChange = { mode ->
-                selectedMode = mode
-                // TODO: Handle mode switch (e.g. stop photo preview if necessary)
-            },
-            cameraSettings = cameraSettings,
-            onVideoQualityChange = { viewModel.setVideoQuality(it) },
-            onAspectRatioChange = { ratio ->
-                viewModel.setAspectRatio(ratio)
-                // Update CameraX aspect ratio
-                val targetRatio = when (ratio) {
-                    "4:3" -> androidx.camera.core.AspectRatio.RATIO_4_3
-                    "16:9" -> androidx.camera.core.AspectRatio.RATIO_16_9
-                    else -> androidx.camera.core.AspectRatio.RATIO_4_3 // 1:1 handled by cropping in processing
-                }
-                cameraController.imageCaptureTargetSize = androidx.camera.view.CameraController.OutputSize(targetRatio)
-            },
-            onDateWatermarkChange = { viewModel.setDateWatermarkEnabled(it) },
-            onShutterSoundChange = { viewModel.setShutterSoundEnabled(it) },
-            onGridLinesChange = { viewModel.setGridLinesEnabled(it) },
-            onMapOverlayChange = { viewModel.setMapOverlayEnabled(it) },
-            onFlipFrontPhotoChange = { viewModel.updateFlipFrontPhoto(it) },
-            onImageFormatChange = { viewModel.updateImageFormat(it) },
-            onCompressionQualityChange = { viewModel.updateCompressionQuality(it) },
-            onSaveExifChange = { viewModel.updateSaveExif(it) },
 
-            onCustomSavePathChange = {
-                // Open Document Tree Picker
-                // valid path logic is handled in ViewModel/Repo, here we trigger picker
-                documentTreeLauncher.launch(null)
-            },
-            onCustomNoteChange = { viewModel.setCustomNote(it) },
-            onDateFormatChange = { viewModel.setDateFormat(it) },
-            onThaiLanguageChange = { viewModel.setThaiLanguage(it) },
-            onSwitchCameraClick = {
-                isFrontCamera = !isFrontCamera
-                cameraController.cameraSelector = if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
-            },
-            // Resolution Switching
-            supportedResolutions = viewModel.supportedResolutions.collectAsState().value,
-            onTargetResolutionChange = { w, h -> viewModel.updateTargetResolution(w, h) },
-            onGalleryClick = {
-                // Switch to Gallery View
-                viewModel.loadRecentMedia()
-                currentScreen = "gallery"
-            },
-            // Macro & Sensor
-            isCapturing = isCapturing,
-            lastCapturedUri = viewModel.lastCapturedUri.collectAsState().value,
-            sensorViewModel = sensorViewModel,
-            onCaptureClick = {
-                if (selectedMode == "รูปถ่าย") {
-                    if (isCapturing) return@CameraScreen
-                    
-                    viewModel.playShutterSound()
-                    cameraController.takePicture(
-                        mainExecutor,
-                        object : ImageCapture.OnImageCapturedCallback() {
-                            override fun onCaptureSuccess(image: ImageProxy) {
-                                val bitmap = image.toBitmap()
-                                image.close()
-                                
-                                viewModel.processAndSaveImage(bitmap, isFrontCamera) { uri ->
-                                    // Optionally refresh gallery list immediately if we want
+    // ANIMATED TRANSITION
+    AnimatedContent(
+        targetState = currentScreen,
+        transitionSpec = {
+            if (targetState == "gallery") {
+                // Camera -> Gallery: Slide Left
+                slideInHorizontally { width -> width } + fadeIn() togetherWith
+                slideOutHorizontally { width -> -width } + fadeOut()
+            } else {
+                // Gallery -> Camera: Slide Right
+                slideInHorizontally { width -> -width } + fadeIn() togetherWith
+                slideOutHorizontally { width -> width } + fadeOut()
+            }
+        },
+        label = "ScreenNav"
+    ) { targetScreen ->
+        if (targetScreen == "camera") {
+            CameraScreen(
+                modifier = Modifier.fillMaxSize(),
+                cameraController = cameraController,
+                flashMode = flashMode,
+                activeExtensionMode = activeExtensionMode, // [NEW] Pass Extension Mode
+                isCapturing = isCapturing, // [NEW] Strict Capture Lock
+                onExtensionToggle = { viewModel.toggleExtensionMode() }, // [NEW] Toggle Action
+                onFlashClick = { 
+                    viewModel.toggleFlash(isFrontCamera)
+                },
+                onMenuClick = { 
+                    // Settings handled in CameraScreen
+                },
+    
+                onZoomChange = { zoom ->
+                    cameraController.setZoomRatio(zoom)
+                },
+                onModeChange = { mode ->
+                    selectedMode = mode
+                    // TODO: Handle mode switch (e.g. stop photo preview if necessary)
+                },
+                cameraSettings = cameraSettings,
+                onVideoQualityChange = { viewModel.setVideoQuality(it) },
+                onAspectRatioChange = { ratio ->
+                    viewModel.setAspectRatio(ratio)
+                },
+                onDateWatermarkChange = { viewModel.setDateWatermarkEnabled(it) },
+                onShutterSoundChange = { viewModel.setShutterSoundEnabled(it) },
+                onGridLinesChange = { viewModel.setGridLinesEnabled(it) },
+                onFlipFrontPhotoChange = { viewModel.updateFlipFrontPhoto(it) },
+                onImageFormatChange = { viewModel.updateImageFormat(it) },
+                onCompressionQualityChange = { viewModel.updateCompressionQuality(it) },
+                onSaveExifChange = { viewModel.updateSaveExif(it) },
+    
+                onCustomSavePathChange = {
+                    // Open Document Tree Picker
+                    // valid path logic is handled in ViewModel/Repo, here we trigger picker
+                    documentTreeLauncher.launch(null)
+                },
+                onCustomNoteChange = { viewModel.setCustomNote(it) },
+                onDateFormatChange = { viewModel.setDateFormat(it) },
+                onThaiLanguageChange = { viewModel.setThaiLanguage(it) },
+                onSwitchCameraClick = {
+                    isFrontCamera = !isFrontCamera
+                    // Delegate to ViewModel to check Extensions for new facing
+                    viewModel.refreshCameraSelector(isFront = isFrontCamera)
+                },
+                // Resolution Switching
+                supportedResolutions = viewModel.supportedResolutions.collectAsState().value,
+                onTargetResolutionChange = { w, h -> viewModel.updateTargetResolution(w, h) },
+                onGalleryClick = {
+                    // Switch to Gallery View
+                    // GalleryViewModel handles loading its own data now
+                    currentScreen = "gallery"
+                },
+                // Macro & Sensor
+    
+                lastCapturedUri = viewModel.lastCapturedUri.collectAsState().value,
+                sensorViewModel = sensorViewModel,
+                onCaptureClick = {
+                    // Only for Photo Mode (called after timer)
+                    if (selectedMode == "รูปถ่าย") {
+                        if (isCapturing) return@CameraScreen
+                        
+                        viewModel.playShutterSound()
+                        cameraController.takePicture(
+                            mainExecutor,
+                            object : ImageCapture.OnImageCapturedCallback() {
+                                override fun onCaptureSuccess(image: ImageProxy) {
+                                    val bitmap = image.toBitmap()
+                                    // Extract EXIF before closing
+                                    val exifAttributes = com.example.timestampcamera.util.ExifUtils.extractExifAttributes(image)
+                                    val imageRotation = image.imageInfo.rotationDegrees
+                                    image.close()
+                                    
+                                    // CRITICAL: image.toBitmap() in CameraX 1.4+ ALREADY rotates the bitmap to be 
+                                    // upright relative to the current display orientation.
+                                    // Our sensorViewModel.uiRotation provides the device's physical orientation.
+                                    // We only need to apply additional rotation if we want to force landscape/portrait 
+                                    // aspect ratios in the final file regardless of how it was captured.
+                                    
+                                    val vmRotation = viewModel.uiRotation.value
+                                    
+                                    Log.d("CameraCapture", "Image rotationDegrees: $imageRotation, VM UI rotation: $vmRotation")
+                                    
+                                    // For now, we trust toBitmap()'s upright result, and use sensorRotation 
+                                    // ONLY to compensate for what toBitmap might have already handled or missed.
+                                    // Usually, captureRotation = 0 is correct if toBitmap() did its job.
+                                    val captureRotation = 0f 
+                                    
+                                    viewModel.processAndSaveImage(bitmap, isFrontCamera, captureRotation, exifAttributes) { uri ->
+                                        // Optionally refresh gallery list immediately if we want
+                                    }
+                                }
+        
+                                override fun onError(exception: ImageCaptureException) {
+                                    Toast.makeText(context, "Capture Failed: ${exception.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
-    
-                            override fun onError(exception: ImageCaptureException) {
-                                Toast.makeText(context, "Capture Failed: ${exception.message}", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                } else {
-                    // Video Mode
-                    toggleVideoRecording()
-                }
-            },
-            isRecording = isRecording,
-            recordingDuration = recordingDuration
-        )
-    } else {
-        // GALLERY SCREEN
-        val recentMedia by viewModel.recentMedia.collectAsState()
-        
-        GalleryScreen(
-            mediaList = recentMedia,
-            onBack = { currentScreen = "camera" },
-            onDelete = { item -> viewModel.deleteMedia(item) }
-        )
+                        )
+                    }
+                },
+                onStartRecording = { toggleVideoRecording() },
+                onStopRecording = { toggleVideoRecording() },
+                isRecording = isRecording,
+                recordingDuration = recordingDuration,
+                // Exposure Params
+                exposureIndex = viewModel.exposureIndex.collectAsState().value,
+                exposureRange = viewModel.exposureRange.collectAsState().value,
+                onExposureChange = { viewModel.updateExposureIndex(it) },
+                shutterEvent = viewModel.shutterEvent // Pass Flow
+            )
+
+
+        } else {
+            // GALLERY SCREEN (Powered by GalleryViewModel)
+            GalleryScreen(
+                onBack = { currentScreen = "camera" }
+            )
+        }
     }
 }
+
