@@ -54,6 +54,8 @@ import com.example.timestampcamera.data.CustomField
 import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.camera.view.LifecycleCameraController
+import com.example.timestampcamera.util.FileUtils
+
 
 
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
@@ -1218,6 +1220,22 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                     index = 1 // Basic index for now
                 )
 
+                // 2024-01-26 Smart Folder Logic
+                // Priority: Note (Custom Text) > Project Name > Null (Default)
+                val rawFolderName = if (configWithProjectInfo.customText.isNotEmpty()) {
+                    configWithProjectInfo.customText
+                } else if (configWithProjectInfo.projectName.isNotEmpty()) {
+                    configWithProjectInfo.projectName
+                } else {
+                    ""
+                }
+                
+                val smartFolderName = if (rawFolderName.isNotEmpty()) {
+                    FileUtils.sanitizeFolderName(rawFolderName)
+                } else {
+                    null // Fallback to default behavior (root folder or settings driven)
+                }
+
                 // 4a. Save Original if enabled
                 var originalUri: Uri? = null
                 if (currentSettings.saveOriginalPhoto) {
@@ -1227,7 +1245,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                         context = getApplication(),
                         isFrontCamera = isFrontCamera,
                         location = location,
-                        customFileName = generatedFileName + "_original"
+                        customFileName = generatedFileName + "_original",
+                        subFolderName = smartFolderName
                    )
                 }
 
@@ -1238,7 +1257,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                     context = getApplication(),
                     isFrontCamera = isFrontCamera,
                     location = location,
-                    customFileName = generatedFileName
+                    customFileName = generatedFileName,
+                    subFolderName = smartFolderName
                 )
                 
                 // Write EXIF Tags & AI Analysis

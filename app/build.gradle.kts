@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.timestampcamera"
         minSdk = 24
         targetSdk = 34
-        versionCode = 49
-        versionName = "2.29"
+        versionCode = 50
+        versionName = "2.30"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

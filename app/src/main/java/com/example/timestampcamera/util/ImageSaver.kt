@@ -26,7 +26,8 @@ object ImageSaver {
         context: Context,
         isFrontCamera: Boolean,
         location: Location? = null,
-        customFileName: String? = null // Optional override
+        customFileName: String? = null, // Optional override
+        subFolderName: String? = null   // Optional sub-folder (e.g. Project Name)
     ): Uri? = withContext(Dispatchers.IO) {
         
         var processedBitmap = bitmap
@@ -55,9 +56,19 @@ object ImageSaver {
             try {
                 val treeUri = Uri.parse(settings.customSavePath)
                 val dir = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, treeUri)
-                if (dir != null && dir.exists()) {
+                
+                // If subFolderName is provided, try to find or create it inside the custom path
+                var displayDir = dir
+                if (dir != null && dir.exists() && !subFolderName.isNullOrBlank()) {
+                     val subDir = dir.findFile(subFolderName) ?: dir.createDirectory(subFolderName)
+                     if (subDir != null) {
+                         displayDir = subDir
+                     }
+                }
+
+                if (displayDir != null && displayDir.exists()) {
                     val mimeType = "image/${settings.imageFormat.name.lowercase()}"
-                    val file = dir.createFile(mimeType, fileName)
+                    val file = displayDir.createFile(mimeType, fileName)
                     
                     if (file != null) {
                         context.contentResolver.openOutputStream(file.uri)?.use { outputStream ->
@@ -91,7 +102,12 @@ object ImageSaver {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Smart Album Grouping: Save to Project Subfolder
-                val projectPath = if (settings.projectName.isNotBlank()) "/${settings.projectName}" else ""
+                // Priority: Explicit subFolderName > Project Name Settings > Root
+                val folderName = if (!subFolderName.isNullOrBlank()) subFolderName 
+                                 else if (settings.projectName.isNotBlank()) settings.projectName 
+                                 else null
+                                 
+                val projectPath = if (folderName != null) "/$folderName" else ""
                 put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/TimestampCamera" + projectPath)
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
