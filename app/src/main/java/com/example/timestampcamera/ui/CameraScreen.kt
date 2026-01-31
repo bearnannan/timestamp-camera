@@ -1007,6 +1007,11 @@ fun CameraScreen(
             currentLocation = locationData,
             
             noteHistory = noteHistory.toList(),
+            savedNotes = viewModel.savedNotes.collectAsState().value,
+            onAddSavedNote = { viewModel.addSavedNote(it) },
+            onRemoveSavedNote = { viewModel.removeSavedNote(it) },
+            onClearSavedNotes = { viewModel.clearSavedNotes() },
+            onImportSavedNotes = { viewModel.importSavedNotes(it) },
             
             saveOriginalPhoto = cameraSettings.saveOriginalPhoto,
             onSaveOriginalPhotoChange = { viewModel.updateSaveOriginalPhoto(it) },

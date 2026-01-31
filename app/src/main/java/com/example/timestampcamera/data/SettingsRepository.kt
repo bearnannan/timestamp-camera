@@ -156,6 +156,7 @@ class SettingsRepository(private val context: Context) {
         val CUSTOM_FIELDS = stringPreferencesKey("custom_fields")
         val TEXT_ORDER = stringPreferencesKey("text_order")
         val AVAILABLE_TAGS = stringSetPreferencesKey("available_tags")
+        val SAVED_NOTES = stringSetPreferencesKey("saved_notes")
         val ADDRESS_RESOLUTION = stringPreferencesKey("address_resolution")
         val SAVE_ORIGINAL_PHOTO = booleanPreferencesKey("save_original_photo")
         val FILE_NAME_FORMAT = stringPreferencesKey("file_name_format")
@@ -576,6 +577,40 @@ class SettingsRepository(private val context: Context) {
             // Convert to list to use takeLast, then back to set
             val newHistory = (currentHistory + tag).toList().takeLast(10).toSet() 
             preferences[PreferencesKeys.TAGS_HISTORY] = newHistory
+        }
+    }
+
+    // ========== SAVED NOTES (Export/Import) ==========
+    val savedNotesFlow: Flow<Set<String>> = context.dataStore.data
+        .map { preferences ->
+            preferences[PreferencesKeys.SAVED_NOTES] ?: emptySet()
+        }
+
+    suspend fun addSavedNote(note: String) {
+        if (note.isBlank()) return
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.SAVED_NOTES] ?: emptySet()
+            preferences[PreferencesKeys.SAVED_NOTES] = current + note
+        }
+    }
+
+    suspend fun removeSavedNote(note: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.SAVED_NOTES] ?: emptySet()
+            preferences[PreferencesKeys.SAVED_NOTES] = current - note
+        }
+    }
+
+    suspend fun updateSavedNotes(notes: Set<String>) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.SAVED_NOTES] ?: emptySet()
+            preferences[PreferencesKeys.SAVED_NOTES] = current + notes
+        }
+    }
+
+    suspend fun clearSavedNotes() {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SAVED_NOTES] = emptySet()
         }
     }
 

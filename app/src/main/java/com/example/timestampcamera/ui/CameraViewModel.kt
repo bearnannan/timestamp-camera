@@ -389,6 +389,9 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     val noteHistory: StateFlow<Set<String>> = settingsRepository.customNoteHistoryFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
+    val savedNotes: StateFlow<Set<String>> = settingsRepository.savedNotesFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     val tagsHistory: StateFlow<Set<String>> = settingsRepository.tagsHistoryFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
     
@@ -1239,6 +1242,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                 // 4a. Save Original if enabled
                 var originalUri: Uri? = null
                 if (currentSettings.saveOriginalPhoto) {
+                   // Save Original in subfolder "Original" inside the Note folder
+                   val originalSubFolder = if (!smartFolderName.isNullOrBlank()) "$smartFolderName/Original" else "Original"
                    originalUri = ImageSaver.saveImage(
                         bitmap = workingBitmap, // Clean version (flipped if needed)
                         settings = currentSettings,
@@ -1246,7 +1251,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                         isFrontCamera = isFrontCamera,
                         location = location,
                         customFileName = generatedFileName + "_original",
-                        subFolderName = smartFolderName
+                        subFolderName = originalSubFolder
                    )
                 }
 
@@ -1502,6 +1507,23 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
 
     fun importAvailableTags(tags: Set<String>) {
         viewModelScope.launch { settingsRepository.updateAvailableTags(tags) }
+    }
+
+    // Saved Notes Management
+    fun addSavedNote(note: String) {
+        viewModelScope.launch { settingsRepository.addSavedNote(note) }
+    }
+
+    fun removeSavedNote(note: String) {
+        viewModelScope.launch { settingsRepository.removeSavedNote(note) }
+    }
+
+    fun clearSavedNotes() {
+        viewModelScope.launch { settingsRepository.clearSavedNotes() }
+    }
+
+    fun importSavedNotes(notes: Set<String>) {
+        viewModelScope.launch { settingsRepository.updateSavedNotes(notes) }
     }
 
     fun updateSaveOriginalPhoto(enabled: Boolean) {

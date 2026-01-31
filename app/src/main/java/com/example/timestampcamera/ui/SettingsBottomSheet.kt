@@ -140,6 +140,12 @@ fun SettingsBottomSheet(
     tags: String,
     onTagsChange: (String) -> Unit,
     noteHistory: List<String> = emptyList(),
+    // Saved Notes Management
+    savedNotes: Set<String> = emptySet(),
+    onAddSavedNote: (String) -> Unit = {},
+    onRemoveSavedNote: (String) -> Unit = {},
+    onClearSavedNotes: () -> Unit = {},
+    onImportSavedNotes: (Set<String>) -> Unit = {},
     tagsHistory: List<String> = emptyList(),
     
     customFields: List<CustomField> = emptyList(),
@@ -725,15 +731,19 @@ fun SettingsBottomSheet(
     }
 
     if (showNoteDialog) {
-        TextInputDialog(
-            title = "ใส่ข้อความเพิ่มเติม",
-            initialValue = tempNote,
+        NoteManagementDialog(
+            currentNote = tempNote,
+            savedNotes = savedNotes,
+            noteHistory = noteHistory,
+            onDismiss = { showNoteDialog = false },
             onConfirm = { 
                 onCustomNoteChange(it)
                 showNoteDialog = false 
             },
-            onDismiss = { showNoteDialog = false },
-            suggestions = noteHistory
+            onAddNote = onAddSavedNote,
+            onRemoveNote = onRemoveSavedNote,
+            onClearNotes = onClearSavedNotes,
+            onImportNotes = onImportSavedNotes
         )
     }
     
