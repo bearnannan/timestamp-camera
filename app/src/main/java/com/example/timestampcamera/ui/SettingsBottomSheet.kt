@@ -86,6 +86,9 @@ fun SettingsBottomSheet(
     onDateFormatChange: (String) -> Unit,
     useThaiLocale: Boolean,
     onUseThaiLocaleChange: (Boolean) -> Unit,
+    // Theme Settings
+    isDarkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
     // Overlay Styling
     textShadowEnabled: Boolean,
     onTextShadowChange: (Boolean) -> Unit,
@@ -566,6 +569,9 @@ fun SettingsBottomSheet(
                      }
                      Row(modifier = Modifier.padding(start = 16.dp)) {
                          SettingsToggleItem("ใช้ พ.ศ. (Thai Year)", useThaiLocale, onUseThaiLocaleChange)
+                     }
+                     Row(modifier = Modifier.padding(start = 16.dp)) {
+                         SettingsToggleItem("ธีมมืด (Dark Theme)", isDarkTheme, onDarkThemeChange)
                      }
                  }
                 Divider(color = WhiteColor.copy(alpha = 0.1f))

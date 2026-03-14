@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.LifecycleOwner
 import com.example.timestampcamera.data.LocationManager
 import com.example.timestampcamera.data.LocationData
 import com.example.timestampcamera.util.OverlayConfig
@@ -37,7 +39,13 @@ import androidx.camera.core.CameraInfo
 import com.example.timestampcamera.data.SettingsRepository
 import com.example.timestampcamera.data.CameraSettings
 import com.example.timestampcamera.data.ImageFormat
+import com.example.timestampcamera.data.EnhancementSettings
+import com.example.timestampcamera.data.DetectionResult
+import com.example.timestampcamera.data.ProcessingStats
 import com.example.timestampcamera.util.ImageSaver
+import com.example.timestampcamera.util.ImageEnhancementManager
+import com.example.timestampcamera.util.OptimizedImageEnhancementManager
+import com.example.timestampcamera.util.Camera2Manager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import android.util.Size
@@ -60,17 +68,56 @@ import com.example.timestampcamera.util.FileUtils
 
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
 
+    companion object {
+        const val FLASH_AUTO  = 0
+        const val FLASH_ON    = 1
+        const val FLASH_OFF   = 2
+        const val FLASH_TORCH = 3
+    }
+
     private val locationManager = LocationManager(application)
+    private val imageEnhancementManager = OptimizedImageEnhancementManager(application)
+    private val camera2Manager = Camera2Manager(application, ProcessLifecycleOwner.get())
     
     // ORIENTATION STATE
     private val _uiRotation = MutableStateFlow(0f)
     val uiRotation: StateFlow<Float> = _uiRotation.asStateFlow()
+    
+    // Camera2 State
+    private val _camera2Capabilities = MutableStateFlow<com.example.timestampcamera.util.Camera2Capabilities?>(null)
+    val camera2Capabilities: StateFlow<com.example.timestampcamera.util.Camera2Capabilities?> = _camera2Capabilities.asStateFlow()
+    
+    private val _isManualModeSupported = MutableStateFlow(false)
+    val isManualModeSupported: StateFlow<Boolean> = _isManualModeSupported.asStateFlow()
+    
+    // Performance tracking
+    val processingStats = imageEnhancementManager.processingStats
     
     private var orientationEventListener: OrientationEventListener? = null
     private var lastSnappedRotation = 0
     
     init {
         setupOrientationListener(application)
+        initializeCamera2()
+    }
+
+    private fun initializeCamera2() {
+        viewModelScope.launch {
+            try {
+                camera2Manager.initialize()
+                _isManualModeSupported.value = camera2Manager.isManualModeSupported()
+                _camera2Capabilities.value = camera2Manager.getCapabilities()
+            } catch (e: Exception) {
+                // Camera2 not supported, fallback to auto mode
+                _isManualModeSupported.value = false
+            }
+        }
+    }
+
+    fun setCameraControl(cameraControl: androidx.camera.core.CameraControl, cameraInfo: androidx.camera.core.CameraInfo) {
+        camera2Manager.setCameraControl(cameraControl, cameraInfo)
+        _camera2Capabilities.value = camera2Manager.getCapabilities()
+        _isManualModeSupported.value = camera2Manager.isManualModeSupported()
     }
 
     private fun setupOrientationListener(context: android.content.Context) {
@@ -285,8 +332,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Flash Mode: 2 = Off, 1 = On, 0 = Auto (Matches CameraX ImageCapture.FLASH_MODE_*), 3 = Torch
-    private val _flashMode = MutableStateFlow(2) // Default to OFF
+    // Flash Mode: FLASH_OFF(2)=Off, FLASH_ON(1)=On, FLASH_AUTO(0)=Auto, FLASH_TORCH(3)=Torch
+    private val _flashMode = MutableStateFlow(FLASH_OFF) // Default to OFF
     val flashMode: StateFlow<Int> = _flashMode.asStateFlow()
 
     // Determine if we need a UI Screen Flash (Front Camera + Flash ON/AUTO)
@@ -300,7 +347,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     fun updateScreenFlashState(isFrontCamera: Boolean) {
         val mode = _flashMode.value
         // Screen Flash if Front Camera AND (On or Auto)
-        _shouldScreenFlash.value = isFrontCamera && (mode == 1 || mode == 0)
+        _shouldScreenFlash.value = isFrontCamera && (mode == FLASH_ON || mode == FLASH_AUTO)
     }
 
 
@@ -385,6 +432,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     private val settingsRepository = SettingsRepository(application)
     val cameraSettingsFlow: StateFlow<CameraSettings> = settingsRepository.cameraSettingsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CameraSettings())
+    
+    val cameraSettings = cameraSettingsFlow // Alias for UI compatibility
 
     val noteHistory: StateFlow<Set<String>> = settingsRepository.customNoteHistoryFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
@@ -1408,12 +1457,9 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     }
     
 
-    override fun onCleared() {
-        super.onCleared()
-        orientationEventListener?.disable()
-        orientationEventListener = null
-        shutterSound.release()
-    }
+    
+    // onCleared merged into the one at the end of file
+    
     
     // Gallery Methods
     fun loadRecentMedia() {
@@ -1471,7 +1517,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch(Dispatchers.IO) {
             // Use the generic process loop but with the imported bitmap
             // We clone the bitmap because processAndSaveImage recycles the input
-            val bitmapCopy = bitmap.copy(bitmap.config, true)
+            val config = bitmap.config ?: android.graphics.Bitmap.Config.ARGB_8888
+            val bitmapCopy = bitmap.copy(config, true)
             
             // processAndSaveImage handles its own IO dispatch, but calling it here is fine
             processAndSaveImage(bitmapCopy, isFrontCamera = false, onSaved = { uri ->
@@ -1483,6 +1530,186 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
     fun updateTemplateId(id: Int) {
         viewModelScope.launch {
             settingsRepository.updateTemplateId(id)
+        }
+    }
+
+    fun updateDarkTheme(isDark: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateDarkTheme(isDark)
+        }
+    }
+
+    // Advanced Camera Controls
+    fun updateManualMode(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateManualMode(enabled)
+        }
+    }
+
+    fun updateIso(iso: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateIso(iso)
+        }
+    }
+
+    fun updateExposureTime(time: Long) {
+        viewModelScope.launch {
+            settingsRepository.updateExposureTime(time)
+        }
+    }
+
+    fun updateWhiteBalance(wb: String) {
+        viewModelScope.launch {
+            settingsRepository.updateWhiteBalance(wb)
+        }
+    }
+
+    fun updateFocusMode(mode: String) {
+        viewModelScope.launch {
+            settingsRepository.updateFocusMode(mode)
+        }
+    }
+
+    // Image Enhancement Settings
+    fun updateAutoEnhance(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateAutoEnhance(enabled)
+        }
+    }
+
+    fun updatePortraitMode(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updatePortraitMode(enabled)
+        }
+    }
+
+    fun updateObjectDetection(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateObjectDetection(enabled)
+        }
+    }
+
+    fun updateBrightnessAdjustment(value: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateBrightnessAdjustment(value)
+        }
+    }
+
+    fun updateContrastAdjustment(value: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateContrastAdjustment(value)
+        }
+    }
+
+    fun updateSaturationAdjustment(value: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateSaturationAdjustment(value)
+        }
+    }
+
+    // Camera2 Control Functions
+    fun applyCamera2Settings(settings: com.example.timestampcamera.data.CameraSettings) {
+        if (!_isManualModeSupported.value) return
+        
+        viewModelScope.launch {
+            try {
+                val camera2Settings = com.example.timestampcamera.util.Camera2Settings(
+                    iso = settings.iso,
+                    exposureTime = settings.exposureTime,
+                    whiteBalance = settings.whiteBalance,
+                    focusMode = settings.focusMode
+                )
+                
+                val success = camera2Manager.applyManualSettings(camera2Settings)
+                if (!success) {
+                    // Fallback to auto if manual settings fail
+                    camera2Manager.resetToAuto()
+                }
+            } catch (e: Exception) {
+                // Handle Camera2 errors
+                camera2Manager.resetToAuto()
+            }
+        }
+    }
+
+    fun resetCamera2ToAuto() {
+        viewModelScope.launch {
+            camera2Manager.resetToAuto()
+        }
+    }
+
+    // Image Enhancement Functions (Optimized)
+    suspend fun analyzeImage(bitmap: android.graphics.Bitmap, forceRefresh: Boolean = false): DetectionResult {
+        return imageEnhancementManager.analyzeImage(bitmap, forceRefresh)
+    }
+
+    fun enhanceImage(bitmap: android.graphics.Bitmap, settings: com.example.timestampcamera.data.CameraSettings): android.graphics.Bitmap {
+        val enhancementSettings = EnhancementSettings(
+            autoEnhance = settings.autoEnhanceEnabled,
+            portraitMode = settings.portraitModeEnabled,
+            objectDetection = settings.objectDetectionEnabled,
+            brightness = settings.brightnessAdjustment,
+            contrast = settings.contrastAdjustment,
+            saturation = settings.saturationAdjustment
+        )
+        
+        return imageEnhancementManager.enhanceImage(bitmap, enhancementSettings)
+    }
+
+    fun applyPortraitMode(bitmap: android.graphics.Bitmap, mask: android.graphics.Bitmap): android.graphics.Bitmap {
+        return imageEnhancementManager.applyPortraitMode(bitmap, mask)
+    }
+
+    // Batch processing for multiple images
+    suspend fun analyzeBatch(images: List<android.graphics.Bitmap>): List<DetectionResult> {
+        return imageEnhancementManager.analyzeBatch(images)
+    }
+
+    // Performance management functions
+    fun clearEnhancementCache() {
+        imageEnhancementManager.clearCache()
+    }
+
+    fun getPerformanceReport(): String {
+        return imageEnhancementManager.getPerformanceReport()
+    }
+
+    fun optimizeForLowMemory() {
+        // Clear cache when memory is low
+        clearEnhancementCache()
+        System.gc()
+    }
+
+    // Camera2 Helper Functions
+    fun getAvailableIsoValues(): List<Int> {
+        return if (_isManualModeSupported.value) {
+            camera2Manager.getAvailableIsoValues()
+        } else {
+            listOf(100, 200, 400, 800, 1600, 3200) // Fallback values
+        }
+    }
+
+    fun getAvailableExposureTimes(): List<Long> {
+        return if (_isManualModeSupported.value) {
+            camera2Manager.getAvailableExposureTimes()
+        } else {
+            listOf(1000000L, 2000000L, 5000000L, 10000000L, 20000000L, 50000000L, 100000000L) // Fallback values
+        }
+    }
+
+    fun getAvailableWhiteBalanceModes(): List<String> {
+        return if (_isManualModeSupported.value) {
+            camera2Manager.getAvailableWhiteBalanceModes()
+        } else {
+            listOf("AUTO", "DAYLIGHT", "CLOUDY", "FLUORESCENT", "INCANDESCENT") // Fallback values
+        }
+    }
+
+    fun getAvailableFocusModes(): List<String> {
+        return if (_isManualModeSupported.value) {
+            camera2Manager.getAvailableFocusModes()
+        } else {
+            listOf("AUTO", "MANUAL", "MACRO", "INFINITY") // Fallback values
         }
     }
 
@@ -1569,5 +1796,14 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                  Log.e("CameraViewModel", "Failed to remove logo", e)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        camera2Manager.cleanup()
+        imageEnhancementManager.cleanup()
+        orientationEventListener?.disable()
+        orientationEventListener = null
+        shutterSound.release() // Re-added from duplicate
     }
 }

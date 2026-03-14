@@ -12,6 +12,7 @@ import androidx.camera.view.CameraController
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import com.example.timestampcamera.ui.CameraScreen
 import com.example.timestampcamera.ui.CameraViewModel
 import com.example.timestampcamera.ui.GalleryScreen
@@ -57,12 +59,12 @@ import android.util.Size
 
 class MainActivity : ComponentActivity() {
     // ========== VIDEO RECORDING LOGIC ==========
-    private var activeRecording: androidx.camera.video.Recording? = null
     private var showRationaleDialog by mutableStateOf(false)
     private var showSettingsDialog by mutableStateOf(false)
     
     // Add pending action to track what to do after permission is granted
     private var pendingAudioPermissionAction: (() -> Unit)? = null
+
 
     private val audioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -94,10 +96,15 @@ class MainActivity : ComponentActivity() {
         )
         
         setContent {
-            TimestampCameraTheme {
+            val viewModel: CameraViewModel = viewModel()
+            val cameraSettings by viewModel.cameraSettings.collectAsState(initial = com.example.timestampcamera.data.CameraSettings())
+            
+            TimestampCameraTheme(
+                darkTheme = cameraSettings.isDarkTheme
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     CameraApp(
                         showRationaleDialog = showRationaleDialog,

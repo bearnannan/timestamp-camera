@@ -50,7 +50,7 @@ import androidx.camera.extensions.ExtensionMode
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.ripple
 import androidx.compose.material3.*
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -273,6 +273,13 @@ fun CameraScreen(
         }
     }
 
+    // Import function to ensure proper context
+    fun launchImportPicker() {
+        importLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
+
     // Logo Picker
     val logoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -380,6 +387,17 @@ fun CameraScreen(
        ...
     }
     */
+
+    // Initialize Camera2 when camera controller is ready
+    LaunchedEffect(cameraController) {
+        cameraController?.let { controller ->
+            val control = controller.cameraControl
+            val info = controller.cameraInfo
+            if (control != null && info != null) {
+                viewModel.setCameraControl(control, info)
+            }
+        }
+    }
     
     // ========== FLASH EFFECT STATE ==========
     val flashAlpha = remember { Animatable(0f) }
@@ -442,9 +460,7 @@ fun CameraScreen(
                     onEvClick = { showEvSlider = !showEvSlider },
                     onMenuClick = { showSettingsSheet = true },
                     onImportClick = {
-                        importLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
+                        launchImportPicker()
                     },
                     onCloseEditorClick = {
                         viewModel.closeEditor()
@@ -916,6 +932,9 @@ fun CameraScreen(
             onDateFormatChange = onDateFormatChange,
             useThaiLocale = cameraSettings.isThaiLanguage,
             onUseThaiLocaleChange = onThaiLanguageChange,
+            // Theme Settings
+            isDarkTheme = cameraSettings.isDarkTheme,
+            onDarkThemeChange = { viewModel.updateDarkTheme(it) },
             // Resolution Switching
             targetWidth = cameraSettings.targetWidth,
             targetHeight = cameraSettings.targetHeight,
@@ -1415,11 +1434,7 @@ private fun GalleryThumbnail(
                 color = WhiteColor.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(bounded = true),
-                onClick = onClick
-            ),
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         if (lastCapturedUri != null) {
@@ -1557,7 +1572,7 @@ private fun SwitchCameraButton(onClick: () -> Unit, iconRotation: Float = 0f) {
             .background(DarkGray)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(bounded = true, color = WhiteColor),
+                indication = ripple(bounded = false, radius = 24.dp, color = WhiteColor),
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center

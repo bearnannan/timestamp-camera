@@ -1,0 +1,13 @@
+# JDK 17 Configuration for Gradle 9.1.0
+# Uncomment and set the correct path after installing JDK 17
+
+# Example paths (uncomment and adjust):
+# org.gradle.java.home=C:/Program Files/Java/jdk-17
+# org.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-17.0.12-hotspot
+# org.gradle.java.home=C:/Program Files/Java/jdk-17.0.2
+
+# For Android Studio bundled JDK:
+# org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr
+
+# After installing JDK 17, find the correct path and uncomment the line above
+# Then rename this file to local.properties

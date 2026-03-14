@@ -62,7 +62,7 @@ data class CameraSettings(
     val overlayPosition: String = "BOTTOM_RIGHT", // Name of OverlayPosition enum
     // Advanced Tag Management
     val availableTags: Set<String> = emptySet(),
-    val compassPosition: String = "CENTER", // New Compass Position
+    val compassPosition: String = "BOTTOM_LEFT", // New Compass Position
     // Phase 16: Rich Data Overlays
     val compassEnabled: Boolean = false,
     val altitudeEnabled: Boolean = false,
@@ -77,7 +77,26 @@ data class CameraSettings(
     val textStrokeColor: Int = android.graphics.Color.BLACK,
     val googleFontName: String = "Roboto", // e.g. "Roboto", "Oswald"
     val templateId: Int = 0, // 0=Classic, 1=Modern, 2=Minimal
-    // compassTapeEnabled Removed
+    val isDarkTheme: Boolean = false, // Dark/Light Theme Toggle
+    // Advanced Camera Controls
+    val manualModeEnabled: Boolean = false,
+    val iso: Int = 100, // 100-3200
+    val exposureTime: Long = 10000000, // 1/100s default (in nanoseconds)
+    val whiteBalance: String = "AUTO", // AUTO, DAYLIGHT, CLOUDY, FLUORESCENT, INCANDESCENT
+    val focusMode: String = "AUTO", // AUTO, MANUAL, MACRO, INFINITY
+    // Image Enhancement Settings
+    val autoEnhanceEnabled: Boolean = true,
+    val portraitModeEnabled: Boolean = false,
+    val objectDetectionEnabled: Boolean = false,
+    val brightnessAdjustment: Float = 0f, // -100 to +100
+    val contrastAdjustment: Float = 0f, // -100 to +100
+    val saturationAdjustment: Float = 0f, // -100 to +100
+    // Performance Settings
+    val performanceMode: String = "BALANCED", // FAST, BALANCED, QUALITY
+    val enableCache: Boolean = true,
+    val maxCacheSize: Int = 10,
+    val enableBatchProcessing: Boolean = false,
+    val lowMemoryMode: Boolean = false, // compassTapeEnabled Removed
     val customLogoPath: String? = null, // Path to locally saved PNG
     // Data Visibility
     val isAddressEnabled: Boolean = true,
@@ -147,7 +166,27 @@ class SettingsRepository(private val context: Context) {
         val TEXT_STROKE_COLOR = intPreferencesKey("text_stroke_color")
         val GOOGLE_FONT_NAME = stringPreferencesKey("google_font_name")
         val TEMPLATE_ID = intPreferencesKey("template_id")
-        // COMPASS_TAPE_ENABLED Removed
+        val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme") // Dark/Light Theme
+        // Advanced Camera Controls
+        val MANUAL_MODE_ENABLED = booleanPreferencesKey("manual_mode_enabled")
+        val ISO = intPreferencesKey("iso")
+        val EXPOSURE_TIME = longPreferencesKey("exposure_time")
+        val WHITE_BALANCE = stringPreferencesKey("white_balance")
+        val FOCUS_MODE = stringPreferencesKey("focus_mode")
+        // Image Enhancement Settings
+        val AUTO_ENHANCE_ENABLED = booleanPreferencesKey("auto_enhance_enabled")
+        val PORTRAIT_MODE_ENABLED = booleanPreferencesKey("portrait_mode_enabled")
+        val OBJECT_DETECTION_ENABLED = booleanPreferencesKey("object_detection_enabled")
+        val BRIGHTNESS_ADJUSTMENT = floatPreferencesKey("brightness_adjustment")
+        val CONTRAST_ADJUSTMENT = floatPreferencesKey("contrast_adjustment")
+        val SATURATION_ADJUSTMENT = floatPreferencesKey("saturation_adjustment")
+        // Performance Settings
+        val PERFORMANCE_MODE = stringPreferencesKey("performance_mode")
+        val ENABLE_CACHE = booleanPreferencesKey("enable_cache")
+        val MAX_CACHE_SIZE = intPreferencesKey("max_cache_size")
+        val ENABLE_BATCH_PROCESSING = booleanPreferencesKey("enable_batch_processing")
+        val LOW_MEMORY_MODE = booleanPreferencesKey("low_memory_mode")
+        // compassTapeEnabled Removed
         val CUSTOM_LOGO_PATH = stringPreferencesKey("custom_logo_path")
         val CUSTOM_NOTE_HISTORY = stringSetPreferencesKey("custom_note_history")
         val TAGS_HISTORY = stringSetPreferencesKey("tags_history")
@@ -252,6 +291,26 @@ class SettingsRepository(private val context: Context) {
                 textStrokeColor = preferences[PreferencesKeys.TEXT_STROKE_COLOR] ?: android.graphics.Color.BLACK,
                 googleFontName = preferences[PreferencesKeys.GOOGLE_FONT_NAME] ?: "Roboto",
                 templateId = preferences[PreferencesKeys.TEMPLATE_ID] ?: 0,
+                isDarkTheme = preferences[PreferencesKeys.IS_DARK_THEME] ?: false, // Dark/Light Theme
+                // Advanced Camera Controls
+                manualModeEnabled = preferences[PreferencesKeys.MANUAL_MODE_ENABLED] ?: false,
+                iso = preferences[PreferencesKeys.ISO] ?: 100,
+                exposureTime = preferences[PreferencesKeys.EXPOSURE_TIME] ?: 10000000L,
+                whiteBalance = preferences[PreferencesKeys.WHITE_BALANCE] ?: "AUTO",
+                focusMode = preferences[PreferencesKeys.FOCUS_MODE] ?: "AUTO",
+                // Image Enhancement Settings
+                autoEnhanceEnabled = preferences[PreferencesKeys.AUTO_ENHANCE_ENABLED] ?: true,
+                portraitModeEnabled = preferences[PreferencesKeys.PORTRAIT_MODE_ENABLED] ?: false,
+                objectDetectionEnabled = preferences[PreferencesKeys.OBJECT_DETECTION_ENABLED] ?: false,
+                brightnessAdjustment = preferences[PreferencesKeys.BRIGHTNESS_ADJUSTMENT] ?: 0f,
+                contrastAdjustment = preferences[PreferencesKeys.CONTRAST_ADJUSTMENT] ?: 0f,
+                saturationAdjustment = preferences[PreferencesKeys.SATURATION_ADJUSTMENT] ?: 0f,
+                // Performance Settings
+                performanceMode = preferences[PreferencesKeys.PERFORMANCE_MODE] ?: "BALANCED",
+                enableCache = preferences[PreferencesKeys.ENABLE_CACHE] ?: true,
+                maxCacheSize = preferences[PreferencesKeys.MAX_CACHE_SIZE] ?: 10,
+                enableBatchProcessing = preferences[PreferencesKeys.ENABLE_BATCH_PROCESSING] ?: false,
+                lowMemoryMode = preferences[PreferencesKeys.LOW_MEMORY_MODE] ?: false,
                 // compassTapeEnabled Removed
                 compassPosition = preferences[PreferencesKeys.COMPASS_POSITION] ?: "CENTER",
                 customLogoPath = preferences[PreferencesKeys.CUSTOM_LOGO_PATH],
@@ -400,6 +459,111 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateTemplateId(id: Int) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.TEMPLATE_ID] = id
+        }
+    }
+
+    suspend fun updateDarkTheme(isDark: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_DARK_THEME] = isDark
+        }
+    }
+
+    // Advanced Camera Controls
+    suspend fun updateManualMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.MANUAL_MODE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateIso(iso: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ISO] = iso.coerceIn(100, 3200)
+        }
+    }
+
+    suspend fun updateExposureTime(time: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.EXPOSURE_TIME] = time.coerceIn(1000000L, 1000000000L) // 1/1000s to 1s
+        }
+    }
+
+    suspend fun updateWhiteBalance(wb: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.WHITE_BALANCE] = wb
+        }
+    }
+
+    suspend fun updateFocusMode(mode: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.FOCUS_MODE] = mode
+        }
+    }
+
+    // Image Enhancement Settings
+    suspend fun updateAutoEnhance(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AUTO_ENHANCE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updatePortraitMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PORTRAIT_MODE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateObjectDetection(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.OBJECT_DETECTION_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateBrightnessAdjustment(value: Float) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.BRIGHTNESS_ADJUSTMENT] = value.coerceIn(-100f, 100f)
+        }
+    }
+
+    suspend fun updateContrastAdjustment(value: Float) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CONTRAST_ADJUSTMENT] = value.coerceIn(-100f, 100f)
+        }
+    }
+
+    suspend fun updateSaturationAdjustment(value: Float) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SATURATION_ADJUSTMENT] = value.coerceIn(-100f, 100f)
+        }
+    }
+
+    // Performance Settings
+    suspend fun updatePerformanceMode(mode: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PERFORMANCE_MODE] = mode
+        }
+    }
+
+    suspend fun updateEnableCache(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ENABLE_CACHE] = enabled
+        }
+    }
+
+    suspend fun updateMaxCacheSize(size: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.MAX_CACHE_SIZE] = size.coerceIn(5, 50)
+        }
+    }
+
+    suspend fun updateEnableBatchProcessing(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ENABLE_BATCH_PROCESSING] = enabled
+        }
+    }
+
+    suspend fun updateLowMemoryMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LOW_MEMORY_MODE] = enabled
         }
     }
 

@@ -47,6 +47,24 @@ This app replicates the functionality of popular Timestamp Camera apps, offering
 - **Themes**: "Modern" (Gold gradient/Glass) and "Minimal" (Clean lines).
 - **Coordinate Data**: Supports Decimal, DMS, UTM, MGRS, Altitude, and Speed formats.
 - **Custom Logo**: Import transparent PNG files to use as brand logos.
+- **Dynamic Theme (Dark/Light)**: Switch between dark and light themes instantly with persistent settings.
+
+### 🤖 **AI/ML Kit Image Enhancement (New)**
+- **Object Detection**: AI-powered object detection in images with confidence scores.
+- **Portrait Segmentation**: Person detection and mask creation for portrait mode (background blur).
+- **Auto Enhancement**: Automatic image improvement (contrast, brightness, saturation).
+- **Manual Adjustments**: Manual brightness (-100 to +100), contrast, and saturation adjustments.
+- **Performance Optimization**: Caching and background processing for 3-4x faster performance.
+- **Batch Processing**: Group processing of multiple images simultaneously.
+
+### ⚙️ **Advanced Camera Controls (New)**
+- **Manual Mode**: Professional camera control using Camera2 API.
+- **ISO Control**: Manual ISO adjustment (100-3200) for low-light photography.
+- **Exposure Time**: Shutter speed control (1/1000s to 1/10s) in nanoseconds.
+- **White Balance**: 5 white balance modes (AUTO, DAYLIGHT, CLOUDY, FLUORESCENT, INCANDESCENT).
+- **Focus Mode**: 4 focus modes (AUTO, MANUAL, MACRO, INFINITY).
+- **Hardware Detection**: Automatic camera capability detection.
+- **Graceful Fallback**: Uses auto mode if hardware doesn't support manual controls.
 
 ### 🛠 Customization & Settings
 - **Project & Workflow**:
@@ -74,11 +92,15 @@ This app replicates the functionality of popular Timestamp Camera apps, offering
 - **Language**: Kotlin
 - **UI Framework**: Jetpack Compose (Material3)
 - **Camera**: CameraX 1.4.1 (LifecycleCameraController, OverlayEffect)
+- **Camera2 API**: Advanced camera controls (ISO, Exposure, White Balance, Focus)
+- **AI/ML Kit**: Google ML Kit (Object Detection, Image Segmentation)
 - **Location**: Android LocationManager (GPS) with Geocoder
 - **Sensors**: Android SensorManager (Accelerometer + Magnetometer)
 - **Storage**: DataStore Preferences
 - **Async**: Coroutines & Flow
-- **Cloud Integration**: Google Drive API V3 (for backup)
+- **Cloud**: Google Drive API V3 (for backup)
+- **Performance**: LRU Cache, Thread Pool, Background Processing
+- **Image Processing**: Custom color matrices, portrait segmentation
 
 ## Setup & Build
 1. Open project in **Android Studio Ladybug** (or newer).
@@ -97,10 +119,14 @@ This app replicates the functionality of popular Timestamp Camera apps, offering
   - `CameraInfoOverlay`: Composable for displaying info on the camera screen.
   - `CompassManager`: Sensor Fusion logic for the compass.
   - `DriveRepository`: Manages connection and file upload to Google Drive.
+  - `OptimizedImageEnhancementManager`: Manages AI/ML Kit processing with performance optimization.
+  - `Camera2Manager`: Manages Camera2 API for manual controls.
 - **UI Components**:
   - `CameraScreen`: Main application screen.
   - `CameraPreview`: Wrapper for `PreviewView`.
   - `SettingsBottomSheet`: Comprehensive settings screen.
+  - `AdvancedCameraControls`: UI for manual camera controls.
+  - `PerformanceMonitor`: UI for monitoring and optimization.
   - `CompassOverlay`: Compass rendering using Canvas.
 
 ## License

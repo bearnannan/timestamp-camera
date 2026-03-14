@@ -1,0 +1,5 @@
+-dontwarn javax.naming.**
+-dontwarn javax.naming.directory.**
+-dontwarn javax.naming.ldap.**
+-dontwarn org.ietf.jgss.**
+-dontwarn org.apache.http.**

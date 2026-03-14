@@ -1,0 +1,84 @@
+# Add High-Resolution JPEG Export Feature
+
+This plan details the changes required to add a new JPEG export option within the existing "Export รายอำเภอ" modal, allowing for 600 DPI high-resolution output and a selectable Color/Grayscale mode.
+
+## Proposed Changes
+
+### Frontend Components
+
+#### [MODIFY] page.tsx (src/app/page.tsx)
+- **State Updates**: 
+  - Change `exportType` state to allow `'pdf' | 'txt' | 'jpeg'`.
+  - Add new state `colorMode` set to `'color' | 'grayscale'`.
+- **Modal UI Updates**:
+  - Inside the Export Modal, if the triggered action was for visual reports (not TXT), show options to select between PDF and JPEG.
+  - If JPEG is selected, show an additional toggle/radio group for choosing "Color" or "Grayscale".
+- **Export Logic (`handleExportReport`)**:
+  - Unify [handleExportPDF](file:///d:/APP/prossnum/webapp/src/app/page.tsx#189-282) and `handleExportJPEG` triggers.
+  - Loop through selected districts and generate the report using `createRoot` off-screen, as done currently for PDFs.
+  - If JPEG format is selected:
+    - Apply `style.filter = colorMode === 'grayscale' ? 'grayscale(100%)' : 'none'` to the root element.
+    - Call `toJpeg` with `quality: 1.0` and `pixelRatio: 6.25` (assuming a base 96 DPI CSS, 96 x 6.25 = 600 DPI).
+    - Save each district as a separate `.jpg` file, as standard JPEGs do not support multiple pages. Trigger multiple download links.
+  - If PDF format is selected, retain the current logic.
+
+## Verification Plan
+
+### Manual Verification
+1. Open the "Export PDF รายอำเภอ" modal. 
+2. Change the selection format to JPEG and choose "Grayscale". Select one or two districts.
+3. Click "ยืนยัน Export".
+4. Monitor memory performance.
+5. Verify downloaded files are `.jpg`, high resolution, and in grayscale.
+
+---
+
+# Add Export to TXT Feature and Field Expansions
+
+This plan details the changes required to add the new "Export สรุปงาน (.txt)" feature in the Dashboard and expand the database schema to support three new text fields: `poleHeight` (ความสูงเสา), `startDate` (วันที่เริ่มงาน), and `remark` (หมายเหตุ).
+
+## Proposed Changes
+
+### Database & API Layer
+
+#### [MODIFY] route.ts (src/app/api/sheet-data/route.ts)
+- Update [StationData](file:///d:/APP/prossnum/webapp/src/app/api/sheet-data/route.ts#4-17) interface to include `poleHeight?: string`, `startDate?: string`, `remark?: string`.
+- Expand Google Sheets API data ranges from [A:G](file:///d:/APP/prossnum/webapp/src/app/api/sheet-data/route.ts#18-58) to `A:J` for GET, POST, and PUT operations to accommodate the 3 extra columns.
+- Update data parsing mapping:
+  - `H` (index 7) -> `poleHeight`
+  - `I` (index 8) -> `startDate`
+  - `J` (index 9) -> `remark`
+
+### Frontend Components
+
+#### [MODIFY] StationModal.tsx (src/components/StationModal.tsx)
+- Add `poleHeight`, `startDate`, and `remark` to `defaultForm`.
+- Map these new fields in the `useEffect` hook when editing an existing station.
+- Add three new form inputs:
+  - `poleHeight` (Text input: "ความสูงเสา")
+  - `startDate` (Date input type: "วันที่เริ่มงาน")
+  - `remark` (Text area/input: "หมายเหตุ")
+
+#### [MODIFY] page.tsx (src/app/page.tsx)
+- Update the main header actions to include a new button "Export สรุปงาน (.txt)".
+- Update the export modal state to determine the `exportType` (`pdf` or `txt`), or define a [handleExportTXT](file:///d:/APP/prossnum/webapp/src/app/page.tsx#126-188) that works similarly.
+- Implement the text generation loop according to the data mapping template:
+  ```txt
+  [ลำดับ]. สถานีลูกข่าย [ชื่อสถานี] ([ความสูงเสา]) [Type]
+  งานก่อสร้างฐานราก: [เปอร์เซ็นต์ฐานราก]%
+  งานติดตั้งโครงเสา: [เปอร์เซ็นต์ติดตั้งเสา]%
+  ** หมายเหตุ: [ข้อมูล Remark / สิ่งที่ต้องทำต่อ]
+  เริ่มงาน: [วันที่เริ่มงาน]
+  
+  ---
+  ```
+- Use `Blob` with `type: "text/plain;charset=utf-8"` to prompt immediate file download.
+
+## Verification Plan
+
+### Manual Verification
+1. User should navigate to the website.
+2. Click "เพิ่มสถานี" (Add Station) and observe the 3 new fields available for data entry (`poleHeight`, `startDate`, `remark`). Verify successful creation.
+3. Edit an existing station and populate the new fields, then verify the changes save correctly to the Google Sheet.
+4. From the Dashboard, select stations via the Export feature and export as `.txt`.
+5. Open the downloaded `progress_summary.txt` and verify UTF-8 encoding (Thai characters display correctly) and that the text formatting matches the requested template perfectly.

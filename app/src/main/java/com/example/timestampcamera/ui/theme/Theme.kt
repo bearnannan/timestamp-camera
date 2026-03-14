@@ -37,12 +37,18 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = GoldAccent,
-    secondary = GoldDark
+    secondary = GoldDark,
+    background = Color.White,
+    surface = Color(0xFFF5F5F5),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onBackground = Color.Black,
+    onSurface = Color.Black
 )
 
 @Composable
 fun TimestampCameraTheme(
-    darkTheme: Boolean = true, // Always dark for camera app
+    darkTheme: Boolean = true, // Default to dark for camera app
     // Disable dynamic color for consistent black UI
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit

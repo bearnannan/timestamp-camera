@@ -47,6 +47,24 @@
 - **ธีม (Themes)**: แบบ "Modern" (ไล่เฉดสีทอง/กระจก) และ "Minimal" (ลายเส้นเรียบง่าย)
 - **ข้อมูลพิกัด**: รองรับรูปแบบ Decimal, DMS, UTM, MGRS, ความสูง, ความเร็ว
 - **โลโก้ที่กำหนดเอง**: นำเข้าไฟล์ PNG โปร่งใสเพื่อใช้เป็นโลโก้แบรนด์
+- **ธีมแบบไดนามิก (Dark/Light)**: สลับธีมมืด/สว่างได้ทันที พร้อมบันทึกการตั้งค่าไว้
+
+### 🤖 **Image Enhancement ด้วย AI/ML Kit (ใหม่)**
+- **Object Detection**: ตรวจจับวัตถุในภาพด้วย AI พร้อมความมั่นใจ (confidence score)
+- **Portrait Segmentation**: ตรวจจับคนและสร้าง mask สำหรับ portrait mode (background blur)
+- **Auto Enhancement**: ปรับปรุงภาพอัตโนมัติ (contrast, brightness, saturation)
+- **Manual Adjustments**: ปรับ brightness (-100 ถึง +100), contrast, saturation แบบ manual
+- **Performance Optimization**: Caching และ background processing สำหรับความเร็ว 3-4x
+- **Batch Processing**: ประมวลผลหลายภาพพร้อมกันแบบกลุ่ม
+
+### ⚙️ **Advanced Camera Controls (ใหม่)**
+- **Manual Mode**: ควบคุมกล้องแบบมืออาชีพด้วย Camera2 API
+- **ISO Control**: ปรับค่า ISO (100-3200) แบบ manual สำหรับการถ่ายในแสงน้อย
+- **Exposure Time**: ปรับเวลาเปิดชัตเตอร์ (1/1000s ถึง 1/10s) แบบ nanoseconds
+- **White Balance**: 5 โหมดสีขาว (AUTO, DAYLIGHT, CLOUDY, FLUORESCENT, INCANDESCENT)
+- **Focus Mode**: 4 โหมดโฟกัส (AUTO, MANUAL, MACRO, INFINITY)
+- **Hardware Detection**: ตรวจสอบความสามารถของกล้องอัตโนมัติ
+- **Graceful Fallback**: ใช้ auto mode ถ้า hardware ไม่รองรับ manual controls
 
 ### 🛠 การปรับแต่งและการตั้งค่า (Customization & Settings)
 - **ข้อมูลงานและเวิร์กโฟลว์ (Project & Workflow)**:
@@ -74,11 +92,15 @@
 - **ภาษา**: Kotlin
 - **UI Framework**: Jetpack Compose (Material3)
 - **กล้อง**: CameraX 1.4.1 (LifecycleCameraController, OverlayEffect)
+- **Camera2 API**: Advanced camera controls (ISO, Exposure, White Balance, Focus)
+- **AI/ML Kit**: Google ML Kit (Object Detection, Image Segmentation)
 - **ระบุตำแหน่ง**: Android LocationManager (GPS) พร้อม Geocoder
 - **เซ็นเซอร์**: Android SensorManager (Accelerometer + Magnetometer)
 - **การจัดเก็บข้อมูล**: DataStore Preferences
 - **การทำงานแบบอะซิงโครนัส**: Coroutines & Flow
 - **Cloud Integration**: Google Drive API V3 (สำหรับการสำรองข้อมูล)
+- **Performance Optimization**: LRU Cache, Thread Pool, Background Processing
+- **Image Processing**: Custom color matrices, portrait segmentation
 
 ## การติดตั้งและบิลด์ (Setup & Build)
 1. เปิดโปรเจกต์ใน **Android Studio Ladybug** (หรือใหม่กว่า)
@@ -97,10 +119,14 @@
   - `CameraInfoOverlay`: Composable สำหรับแสดงข้อมูลบนหน้าจอกล้อง
   - `CompassManager`: รวมตรรกะ Sensor Fusion สำหรับเข็มทิศ
   - `DriveRepository`: จัดการการเชื่อมต่อและอัปโหลดไฟล์ไปยัง Google Drive
+  - `OptimizedImageEnhancementManager`: จัดการ AI/ML Kit processing พร้อม performance optimization
+  - `Camera2Manager`: จัดการ Camera2 API สำหรับ manual controls
 - **UI Components**:
   - `CameraScreen`: หน้าจอหลักของแอป
   - `CameraPreview`: ตัวห่อหุ้ม `PreviewView`
   - `SettingsBottomSheet`: หน้าจอการตั้งค่าที่ครอบคลุม
+  - `AdvancedCameraControls`: UI สำหรับ manual camera controls
+  - `PerformanceMonitor`: UI สำหรับ monitoring และ optimization
   - `CompassOverlay`: การแสดงผลเข็มทิศด้วย Canvas
 
 ## สัญญาอนุญาต (License)
